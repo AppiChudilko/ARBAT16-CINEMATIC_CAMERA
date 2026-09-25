@@ -1,5 +1,10 @@
 # Arbat16 Camera changelog
 
+## 1.7.1 — 2026-09-25
+
+- Added the official ARBAT16 website and Discord link to the license and documentation.
+- No camera behavior or permissions changed; the no-resale terms remain the same.
+
 ## 1.7.0 — 2026-09-25
 
 - Changed the open/close command to `/ar16_cam`, including diagnostic, emergency close and saved-view reset commands and all current documentation.

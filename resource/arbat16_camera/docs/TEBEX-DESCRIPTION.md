@@ -2,7 +2,7 @@
 
 Build camera shots and editable routes inside RedM with a standalone Lua director resource. Fly the camera, save viewpoints, record movement and apply a cinematic look from an English interface that keeps the game visible behind it.
 
-- **Version:** 1.7.0
+- **Version:** 1.7.1
 - **Resource folder:** `arbat16_camera`
 - **Open command:** `/ar16_cam`
 
@@ -46,3 +46,5 @@ The package includes the Lua resource, local NUI assets, configuration, document
 Use and modification, including commercial-server use and monetized videos, are permitted under the included ARBAT16 source-available license. Free redistribution must retain the license and notices. Selling, reselling, renting or charging for copies of the script or derivatives, including paid bundles, requires separate written permission from ARBAT16. Bundled Inter uses SIL OFL 1.1.
 
 This is an independent resource and is not an official Rockstar Games, Take-Two Interactive, Cfx.re or Tebex product.
+
+Official website: [arbat16.com](https://arbat16.com) · Discord: [dscrd.in/arbat16](https://dscrd.in/arbat16).

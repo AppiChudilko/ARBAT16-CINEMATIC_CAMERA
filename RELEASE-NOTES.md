@@ -1,8 +1,8 @@
-# ARBAT16 Cinematic Camera 1.7.0
+# ARBAT16 Cinematic Camera 1.7.1
 
 ## Install
 
-Download **arbat16_camera-v1.7.0.zip**, extract the single `arbat16_camera` folder into your RedM `resources`, grant `arbat16_camera.use` and start it with `ensure arbat16_camera`. Open with **/ar16_cam**. The adjacent `.sha256` file verifies the ZIP.
+Download **arbat16_camera-v1.7.1.zip**, extract the single `arbat16_camera` folder into your RedM `resources`, grant `arbat16_camera.use` and start it with `ensure arbat16_camera`. Open with **/ar16_cam**. The adjacent `.sha256` file verifies the ZIP.
 
 ## Included
 
@@ -12,9 +12,11 @@ Download **arbat16_camera-v1.7.0.zip**, extract the single `arbat16_camera` fold
 - Translucent monochrome UI, 4K scaling, short prompts and clickable explanations.
 - Complete editable source and the ARBAT16 Source-Available License 1.0 (No Resale), with Inter's separate OFL notice.
 
-## Changes from 1.6.0
+## Changes from 1.7.0
 
-The command family now uses `ar16_cam`, including `ar16_camclose`, `ar16_camdebug` and `ar16_camresetview`. Black & White starts at full strength and can be blended down. Automatic diagnostics are off by default. Back up your configuration and server KVP before updating; the resource folder name remains unchanged.
+Added the official ARBAT16 website and Discord contact to the license and documentation. Camera behavior and license permissions are unchanged. The previous release remains available.
+
+Website: [arbat16.com](https://arbat16.com) · Discord: [dscrd.in/arbat16](https://dscrd.in/arbat16).
 
 ## License
 

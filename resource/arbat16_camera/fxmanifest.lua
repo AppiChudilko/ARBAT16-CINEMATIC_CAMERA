@@ -4,7 +4,7 @@ rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aw
 
 author 'Arbat16 Camera'
 description 'Standalone Lua cinematic camera and keyframe editor for RedM'
-version '1.7.0'
+version '1.7.1'
 license 'ARBAT16 Source-Available License 1.0 (No Resale)'
 
 shared_scripts { 'config.lua', 'shared/core.lua', 'shared/director.lua', 'shared/flight.lua' }

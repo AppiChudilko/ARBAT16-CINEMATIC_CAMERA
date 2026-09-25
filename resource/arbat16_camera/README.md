@@ -1,10 +1,10 @@
-# Arbat16 Camera 1.7.0 — RedM director resource
+# Arbat16 Camera 1.7.1 — RedM director resource
 
 Standalone Lua cinematic camera with an English NUI editor. The game remains visible behind the transparent interface. The NUI starts hidden and opens only through the RedM client. There is no website, sample world, browser simulator, browser scene storage, external asset service or build step in this resource.
 
 ## Install and update
 
-Download the `arbat16_camera-v1.7.0.zip` asset from the [GitHub release](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/releases/tag/v1.7.0). Extract its **arbat16_camera** folder into your RedM server's `resources` directory. Keep the resource folder name unchanged. No framework, database, npm build or external font download is required for installation.
+Download the `arbat16_camera-v1.7.1.zip` asset from the [GitHub release](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/releases/tag/v1.7.1). Extract its **arbat16_camera** folder into your RedM server's `resources` directory. Keep the resource folder name unchanged. No framework, database, npm build or external font download is required for installation.
 
 `server.cfg` should contain:
 
@@ -184,3 +184,5 @@ This is source-available software under the [ARBAT16 No-Resale License](LICENSE.
 See [License FAQ](docs/LICENSE-FAQ.md) for examples and [Third-party notices](THIRD_PARTY_NOTICES.md) for Inter's separate SIL Open Font License. This is not an MIT or OSI open-source license.
 
 Questions and bug reports: [GitHub issues](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/issues).
+
+Official website: [arbat16.com](https://arbat16.com) · Discord: [dscrd.in/arbat16](https://dscrd.in/arbat16).

@@ -5,7 +5,7 @@ These instructions prepare the official GitHub release and the package you uploa
 ## Release identity
 
 - Repository: [AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA).
-- Release version: `1.7.0`, with matching `v1.7.0` tag, manifest, README and product description.
+- Release version: `1.7.1`, with matching `v1.7.1` tag, manifest, README and product description.
 - Installed folder: `arbat16_camera`.
 - Default command: `/ar16_cam`.
 - License: **ARBAT16 Source-Available License 1.0 (No Resale)**.
@@ -17,7 +17,7 @@ The publisher is ARBAT16, identified here by the GitHub account AppiChudilko. No
 1. Finish the release checks, then perform a target-server smoke test of flight, a saved-camera recall, route recording and playback, Black & White, composition guides, and workspace restoration. Automated tests are not evidence of live game appearance or compatibility.
 2. Run `python tools/build_release.py` from the repository root to build the release ZIP from the resource source, with a single `arbat16_camera` folder containing `fxmanifest.lua`. Keep dated copies of the previous installation and new release. Never include runtime diagnostics, server configuration, credentials, player KVP data, caches, development dependencies or unrelated workspace files.
 3. Include `LICENSE.txt`, `THIRD_PARTY_NOTICES.md`, `web/fonts/OFL-Inter.txt`, the README and the documentation with the deliverable. Inspect the ZIP contents and record its SHA-256 hash. The bundled Inter notice must remain intact.
-4. Extract the ZIP into a clean temporary folder and verify the layout. Check that documentation uses `/ar16_cam` and that the manifest reports `1.7.0`. Keep the installation resource name stable so ordinary updates continue using existing KVP storage.
+4. Extract the ZIP into a clean temporary folder and verify the layout. Check that documentation uses `/ar16_cam` and that the manifest reports `1.7.1`. Keep the installation resource name stable so ordinary updates continue using existing KVP storage.
 
 Saved scenes and workspaces live in server resource KVP storage, outside a normal resource ZIP. An archive of the code does not back up player libraries. Export scenes or back up server KVP separately before migration.
 
@@ -25,7 +25,7 @@ Saved scenes and workspaces live in server resource KVP storage, outside a norma
 
 Publish the resource source under `resource/arbat16_camera`, with a copy of `LICENSE.txt` at the repository root and the complete notices inside the resource. Add the README, changelog and relevant documentation. Exclude private local paths, diagnostics and generated development files from the public copy.
 
-Create the `v1.7.0` tag and release against the intended commit, attach the inspected ZIP and its checksum, and describe actual changes and any unverified game behavior. Check the repository links before sharing them. If updating an existing release, preserve previous version artifacts rather than silently replacing their contents.
+Create the `v1.7.1` tag and release against the intended commit, attach the inspected ZIP and its checksum, and describe actual changes and any unverified game behavior. Check the repository links before sharing them. If updating an existing release, preserve previous version artifacts rather than silently replacing their contents.
 
 Do not select MIT, Apache, GPL or another standard license in a repository wizard. The project uses its actual custom license file. Describe it as **source-available, no resale**. A GitHub license badge is not a substitute for the controlling text.
 

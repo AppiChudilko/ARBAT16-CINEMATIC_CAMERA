@@ -1,6 +1,6 @@
 {
   "name": "arbat16-redm-cinematic-camera",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "private": true,
   "description": "Development checks for ARBAT16 Cinematic Camera; no Node runtime is required by RedM",
   "license": "SEE LICENSE IN LICENSE.txt",

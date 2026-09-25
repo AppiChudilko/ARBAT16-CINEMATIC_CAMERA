@@ -2,7 +2,7 @@
 
 A standalone in-game director for cinematic shots, saved camera angles and editable camera routes. Lua powers the camera; the English interface stays transparent over the game.
 
-**Version 1.7.0 · Command `/ar16_cam` · Resource `arbat16_camera`**
+**Version 1.7.1 · Command `/ar16_cam` · Resource `arbat16_camera`**
 
 [Download the ready-to-install ZIP](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/releases/latest) · [Full user guide](resource/arbat16_camera/README.md) · [License](LICENSE.txt) · [Report a problem](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/issues)
 
@@ -22,7 +22,7 @@ A standalone in-game director for cinematic shots, saved camera angles and edita
 
 ## Install
 
-1. Download `arbat16_camera-v1.7.0.zip` from Releases.
+1. Download `arbat16_camera-v1.7.1.zip` from Releases.
 2. Extract the `arbat16_camera` folder into your RedM server's `resources` directory.
 3. Add the lines below to `server.cfg`. Ensure your account belongs to `group.admin`, or grant the ACE to your own identifier as explained in the user guide.
 4. Start the resource and enter `/ar16_cam` in chat.
@@ -69,3 +69,5 @@ The ZIP contains one installable resource folder and its license documents. Logs
 [Changes](resource/arbat16_camera/CHANGELOG.md) · [Tebex product text](resource/arbat16_camera/docs/TEBEX-DESCRIPTION.md) · [Publishing notes](resource/arbat16_camera/docs/PUBLISHING.md)
 
 Offline tests cover logic and NUI behavior. They do not replace an in-game smoke test on your RedM server; native effect appearance and compatibility with other camera/weather resources depend on that environment.
+
+Official website: [arbat16.com](https://arbat16.com) · Discord: [dscrd.in/arbat16](https://dscrd.in/arbat16).
