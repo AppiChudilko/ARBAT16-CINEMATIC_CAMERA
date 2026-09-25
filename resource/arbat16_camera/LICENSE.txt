@@ -1,0 +1,145 @@
+ARBAT16 Source-Available License 1.0 (No Resale)
+
+Copyright (c) 2026 ARBAT16
+Licensor: ARBAT16, GitHub account AppiChudilko
+Project: https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA
+
+This is a custom source-available license. It is not the MIT License and is
+not an open-source license. Its restriction on paid distribution is part
+of the permission granted below.
+
+1. Scope
+
+"Software" means the Arbat16 Camera resource code, interface and
+documentation distributed with this license, to the extent the Licensor
+owns or is authorized to license them. It includes covered portions in
+copies, modifications, adaptations, ports and other derivative versions.
+
+Separately licensed third-party materials are excluded. In particular,
+the Inter font at web/fonts/inter-latin.woff2 remains subject exclusively
+to the SIL Open Font License 1.1 in web/fonts/OFL-Inter.txt. This license
+does not add a no-resale restriction to Inter or replace its license.
+See THIRD_PARTY_NOTICES.md for component notices.
+
+Videos, streams, screenshots, camera paths, scenes, presets and other
+content created using the Software are not Software merely because the
+Software produced or displayed them. Independently created material that
+does not incorporate or adapt covered code is also outside this license.
+Rights in game content and other third-party material are unaffected.
+
+2. Permission to use and modify
+
+Subject to these conditions, the Licensor grants you worldwide,
+non-exclusive permission to use, run, study, copy, modify, merge and adapt
+the Software for any purpose, including commercial purposes, and to
+redistribute it without charge as described in section 3.
+
+You may operate commercial or paid-access game servers using the Software,
+including paid membership and in-server features. You may make and sell
+videos, images and other output, receive revenue from streams, and use the
+Software in client filming work. Those activities do not become prohibited
+distribution merely because they earn money.
+
+The Software may be installed on your own servers or on infrastructure
+operated for you. Routine delivery of resource files to players by the
+game platform as part of permitted server operation is allowed. This
+does not authorize selling copies or licenses for customers to deploy the
+Software themselves.
+
+No payment to the Licensor is required by this license for permitted use.
+This does not prevent an official purchase price under section 5.
+
+3. Free redistribution and notices
+
+You may share original or modified copies, in source or executable form,
+without charging recipients for the Software or conditioning access to
+it on a purchase, subscription, rental or required donation.
+
+For every redistributed resource or derivative package:
+
+  a. Include this complete license and preserve applicable copyright,
+     attribution and third-party license notices.
+  b. Clearly identify modified versions as modified, with a brief
+     description of your changes. Do not present your modifications as
+     an official ARBAT16 release without written permission.
+  c. Do not state or grant terms that authorize paid distribution of
+     covered Software contrary to section 4. Recipients receive their
+     permission for that Software directly under this license.
+
+Routine delivery of client runtime files to players under section 2 does
+not require an in-game credit screen or transmission of the complete
+resource package. Keep these notices with the installed resource and
+with any resource package you share. Separate third-party notice duties,
+including the Inter font's OFL conditions, remain applicable.
+
+You may rename or rebrand a modified version while keeping these notices.
+Renaming does not remove the restrictions below. You are not required to
+publish private changes, release your other projects, or provide source
+for a redistributed executable under this license. Covered Software in
+such a version remains subject to these conditions.
+
+4. No selling, reselling, rental or paid access to the Software
+
+Unless section 5 applies, you may not sell, resell, rent, sublicense for a
+fee, or otherwise require payment in exchange for a copy of the Software
+or a derivative version, access to its code or installation package, or
+a right to deploy it on another person's own server or infrastructure.
+
+This includes paid downloads, paid forks, paid updates, subscription
+access to the resource, required donations, and paid bundles or server
+packages containing it. Listing the Software as "free" inside a paid
+bundle does not avoid this restriction. The same rule applies after
+modifying, translating, renaming, encrypting, compiling or rebranding it.
+
+"Paid access" here concerns obtaining the Software itself or rights for
+a separate deployment. It does not prohibit the hosted server use,
+in-server features or monetized output expressly allowed in section 2.
+
+You may charge separately for genuine hosting, installation,
+configuration, training or support services if the charge is not a
+condition of obtaining a copy of, or permission to use, the Software.
+Do not disguise a paid copy or paid derivative as a service or a bundle.
+Voluntary donations with no access condition are permitted.
+
+5. Official distribution and additional permission
+
+The Licensor may sell and distribute the official original Software and
+the Licensor's own releases. A recipient's purchase of an official copy
+does not confer resale rights. The Licensor may give specific additional
+permissions in a separate written agreement, including an exception to
+section 4. No such permission is implied by silence, a fork, attribution
+or a purchase. Only rights the Licensor controls can be granted.
+
+6. Names and third-party rights
+
+No trademark rights or permission to imply endorsement are granted,
+apart from identifying the Software and preserving required notices.
+This resource is not an official product of Rockstar Games, Take-Two
+Interactive, Cfx.re or Tebex. This license grants no rights in their
+games, services, trademarks or other materials. Their applicable terms
+remain separate from permission to use this resource.
+
+7. Warranty and liability
+
+To the extent permitted by applicable law, the Software is provided
+"as is", without warranties or conditions of any kind, express or
+implied, including merchantability, fitness for a particular purpose,
+title and non-infringement. No particular compatibility, availability,
+support, updates or results are promised by this license.
+
+To the extent permitted by applicable law, the Licensor and contributors
+are not liable for loss or damage arising from the Software or its use,
+including lost data, lost profits, interruption or consequential loss,
+whether claimed in contract, tort or otherwise.
+
+Nothing in this license excludes or limits mandatory rights, statutory
+consumer protections or liabilities that applicable law does not allow
+to be excluded or limited. This license selects no governing law, court
+or jurisdiction and does not replace any mandatory purchase terms.
+
+8. Other rights
+
+Permissions are conditional on compliance with this license. Rights not
+granted are reserved. Nothing here restricts uses independently allowed
+by applicable law or permissions you receive under a separate applicable
+license. Third-party components retain their own license terms.
