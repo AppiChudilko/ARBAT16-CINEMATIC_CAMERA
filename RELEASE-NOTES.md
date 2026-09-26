@@ -1,27 +1,14 @@
-# ARBAT16 Cinematic Camera 1.7.1
+# ARBAT16 Cinematic Camera 1.8.0
 
-## Install
+One resource now supports FiveM and RedM. The client and server detect the game automatically, select its native API, and show the matching weather, filter and transport controls. The folder `arbat16_camera`, command `/ar16_cam` and ACE permission `arbat16_camera.use` stay unchanged.
 
-Download **arbat16_camera-v1.7.1.zip**, extract the single `arbat16_camera` folder into your RedM `resources`, grant `arbat16_camera.use` and start it with `ensure arbat16_camera`. Open with **/ar16_cam**. The adjacent `.sha256` file verifies the ZIP.
+- FiveM: vehicle attachment, GTA V timecycles including Black & White, local weather/clock control, and optional shallow depth of field with focus and strength.
+- RedM: existing horse/wagon attachment, native filters and `simple_weather` integration remain available.
+- Shared free flight, stabilization, dense route recording, saved cameras, timeline, presets, grids and persistent workspaces.
+- Separate verified native tables, dual-game runtime/storage/NUI checks and pinned upstream reference fixtures.
 
-## Included
+The same resource ZIP can be built with `python tools/build_release.py`. A repository source download contains the installable folder under `resource/arbat16_camera`. Keep dated backups and retain the resource name for existing server KVP data. Exported scenes use game-specific locations and weather and are not automatically converted between games.
 
-- Free-flight camera with adjustable stabilization, speed and lens controls.
-- Saved camera angles, a scene library, route editing, dense movement recording and persistent workspaces.
-- Cinematic presets, adjustable Black & White / Photo Mode Noir, frame masks and six composition guides.
-- Translucent monochrome UI, 4K scaling, short prompts and clickable explanations.
-- Complete editable source and the ARBAT16 Source-Available License 1.0 (No Resale), with Inter's separate OFL notice.
+Automated checks pass for both game paths. This does not replace live FiveM and RedM tests of rendering, capture and compatibility with other server resources. The existing repository screenshots were captured in RedM.
 
-## Changes from 1.7.0
-
-Added the official ARBAT16 website and Discord contact to the license and documentation. Camera behavior and license permissions are unchanged. The previous release remains available.
-
-Website: [arbat16.com](https://arbat16.com) · Discord: [dscrd.in/arbat16](https://dscrd.in/arbat16).
-
-## License
-
-Use and modification for any lawful purpose, including commercial servers and monetized videos, are permitted. Free redistribution must retain the license and notices. Recipients may not sell or resell the resource or derivatives, including paid bundles. See LICENSE.txt for full terms and exceptions.
-
-## Validation and limits
-
-Offline Lua, storage, native-contract, runtime, model and NUI tests passed. The native Noir name and call signatures were checked against RDR3 references; its appearance has not yet been checked in a live RedM session. Test on your target server before recording production work. Route recording saves movement, not video, and filters currently apply to the whole scene.
+The ARBAT16 Source-Available License 1.0 (No Resale), official contacts and Inter OFL notices are unchanged.

@@ -15,6 +15,6 @@ The font is bundled locally. The resource does not load it from an external font
 
 ## Technical references
 
-The camera uses native identifiers and invocation metadata to call APIs supplied by RedM and the game. API declarations and timecycle names were checked against [RDR3 NativeDB](https://github.com/alloc8or/rdr3-nativedb-data), [RDR3 discoveries](https://github.com/femga/rdr3_discoveries) and [Cfx.re documentation](https://docs.fivem.net/). These are technical references, not bundled game engines or third-party runtime libraries.
+The camera uses native identifiers and invocation metadata to call APIs supplied by FiveM, RedM and the matching game. GTA V declarations and filter names were checked against [GTA V NativeDB](https://github.com/alloc8or/gta5-nativedb-data) and [GTA V timecycles](https://github.com/DurtyFree/gta-v-data-dumps/blob/master/timecycleModifiers.json). RedM declarations and filter names were checked against [RDR3 NativeDB](https://github.com/alloc8or/rdr3-nativedb-data), [RDR3 discoveries](https://github.com/femga/rdr3_discoveries) and [Cfx.re documentation](https://docs.fivem.net/). These are technical references, not bundled game engines or third-party runtime libraries.
 
-Game content, RedM, Cfx.re and associated names remain subject to their respective owners' rights and terms. Listing a reference or using a compatible interface does not imply endorsement or official approval by those projects, Rockstar Games or Take-Two Interactive.
+Game content, FiveM, RedM, Cfx.re and associated names remain subject to their respective owners' rights and terms. Listing a reference or using a compatible interface does not imply endorsement or official approval by those projects, Rockstar Games or Take-Two Interactive.

@@ -30,6 +30,8 @@ def keep_or_create(path, content):
 
 def build(output):
     manifest = (RESOURCE / 'fxmanifest.lua').read_text(encoding='utf-8-sig')
+    assert "games { 'gta5', 'rdr3' }" in manifest, 'The release must support both games'
+    assert 'rdr3_warning' in manifest, 'RedM manifest acknowledgement is required'
     version = re.search(r"(?m)^version\s+'(\d+\.\d+\.\d+)'", manifest).group(1)
     buffers = {}
     for relative in FILES:
@@ -64,7 +66,7 @@ def build(output):
     digest = hashlib.sha256(payload).hexdigest()
     keep_or_create(output / name, payload)
     keep_or_create(output / f'{name}.sha256', f'{digest}  {name}\n'.encode())
-    metadata = {'version': version, 'archive': name, 'sha256': digest, 'bytes': len(payload),
+    metadata = {'version': version, 'games': ['gta5', 'rdr3'], 'archive': name, 'sha256': digest, 'bytes': len(payload),
                 'files': {name: hashlib.sha256(data).hexdigest() for name, data in sorted(buffers.items())}}
     keep_or_create(output / f'arbat16_camera-v{version}-manifest.json',
                    (json.dumps(metadata, indent=2) + '\n').encode())

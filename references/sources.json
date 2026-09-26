@@ -1,0 +1,21 @@
+{
+  "retrieved": "2026-09-25",
+  "references": {
+    "gta5-natives.json": {
+      "source": "https://raw.githubusercontent.com/alloc8or/gta5-nativedb-data/424fb51b089049a9fbcebcc641500b1d44d255b4/natives.json",
+      "sha256": "d13c7e8d627dfe4eab11ba1c25b3621562ceebfe68b0fb5cfc0644d47469b441"
+    },
+    "rdr3-natives.json": {
+      "source": "https://raw.githubusercontent.com/alloc8or/rdr3-nativedb-data/e8558ab99c7e990edd7200a348379d6880c14f96/natives.json",
+      "sha256": "e6f2992cd18dd5c0c3c62a683430830121a11c3c18ffb631b33c82235fe60f81"
+    },
+    "GetGameName.md": {
+      "source": "https://raw.githubusercontent.com/citizenfx/fivem/0d8a2a6f78a9922445d8930305af82a7b1826980/ext/native-decls/GetGameName.md",
+      "sha256": "2dd2e7d20eba6e2d47eb25f72dedecb58a85121db5492fbdec33b924ad7faddb"
+    },
+    "IsEntityPositionFrozen.md": {
+      "source": "https://raw.githubusercontent.com/citizenfx/fivem/0d8a2a6f78a9922445d8930305af82a7b1826980/ext/native-decls/IsEntityPositionFrozen.md",
+      "sha256": "ae35db3a803c1c795d8827168c52997de2f7e4ef45b3069bf3c03f01c48f5383"
+    }
+  }
+}

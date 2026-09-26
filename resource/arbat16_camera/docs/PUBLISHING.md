@@ -5,7 +5,8 @@ These instructions prepare the official GitHub release and the package you uploa
 ## Release identity
 
 - Repository: [AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA).
-- Release version: `1.7.1`, with matching `v1.7.1` tag, manifest, README and product description.
+- Platforms: one archive for FiveM and RedM, automatically detected.
+- Release version: `1.8.0`, with matching `v1.8.0` tag, manifest, README and product description.
 - Installed folder: `arbat16_camera`.
 - Default command: `/ar16_cam`.
 - License: **ARBAT16 Source-Available License 1.0 (No Resale)**.
@@ -14,10 +15,10 @@ The publisher is ARBAT16, identified here by the GitHub account AppiChudilko. No
 
 ## Prepare the package
 
-1. Finish the release checks, then perform a target-server smoke test of flight, a saved-camera recall, route recording and playback, Black & White, composition guides, and workspace restoration. Automated tests are not evidence of live game appearance or compatibility.
+1. Finish the dual-game release checks, then perform a target-server smoke test in both FiveM and RedM of flight, a saved-camera recall, route recording and playback, Black & White, composition guides, and workspace restoration. Automated tests are not evidence of live game appearance or compatibility.
 2. Run `python tools/build_release.py` from the repository root to build the release ZIP from the resource source, with a single `arbat16_camera` folder containing `fxmanifest.lua`. Keep dated copies of the previous installation and new release. Never include runtime diagnostics, server configuration, credentials, player KVP data, caches, development dependencies or unrelated workspace files.
 3. Include `LICENSE.txt`, `THIRD_PARTY_NOTICES.md`, `web/fonts/OFL-Inter.txt`, the README and the documentation with the deliverable. Inspect the ZIP contents and record its SHA-256 hash. The bundled Inter notice must remain intact.
-4. Extract the ZIP into a clean temporary folder and verify the layout. Check that documentation uses `/ar16_cam` and that the manifest reports `1.7.1`. Keep the installation resource name stable so ordinary updates continue using existing KVP storage.
+4. Extract the ZIP into a clean temporary folder and verify the layout. Check that documentation uses `/ar16_cam` and that the manifest reports `1.8.0`. Keep the installation resource name stable so ordinary updates continue using existing KVP storage.
 
 Saved scenes and workspaces live in server resource KVP storage, outside a normal resource ZIP. An archive of the code does not back up player libraries. Export scenes or back up server KVP separately before migration.
 
@@ -25,7 +26,7 @@ Saved scenes and workspaces live in server resource KVP storage, outside a norma
 
 Publish the resource source under `resource/arbat16_camera`, with a copy of `LICENSE.txt` at the repository root and the complete notices inside the resource. Add the README, changelog and relevant documentation. Exclude private local paths, diagnostics and generated development files from the public copy.
 
-Create the `v1.7.1` tag and release against the intended commit, attach the inspected ZIP and its checksum, and describe actual changes and any unverified game behavior. Check the repository links before sharing them. If updating an existing release, preserve previous version artifacts rather than silently replacing their contents.
+Create the `v1.8.0` tag and release against the intended commit, attach the inspected ZIP and its checksum, and describe actual changes and any unverified game behavior. Check the repository links before sharing them. If updating an existing release, preserve previous version artifacts rather than silently replacing their contents.
 
 Do not select MIT, Apache, GPL or another standard license in a repository wizard. The project uses its actual custom license file. Describe it as **source-available, no resale**. A GitHub license badge is not a substitute for the controlling text.
 
@@ -33,9 +34,9 @@ Do not select MIT, Apache, GPL or another standard license in a repository wizar
 
 Use [TEBEX-DESCRIPTION.md](TEBEX-DESCRIPTION.md) as the product copy after confirming that it matches the released build. Upload the inspected ZIP yourself through your store's product workflow. Set your own price, delivery options and customer-facing purchase details in the store; this document supplies none of those terms.
 
-Capture and upload genuine screenshots from the released resource running in RedM. A useful set shows the full editor, saved cameras and timeline, Black & White at a representative strength, composition guides, and a clean framed shot. Show actual functionality and keep capture resolution or performance claims tied to what you tested. Do not present design mockups as game screenshots. Add screenshots to the store and repository only when the real files are available; the public product description contains no placeholder image links.
+Capture and upload genuine screenshots from the released resource running in FiveM and RedM. A useful set shows the full editor, saved cameras and timeline, Black & White at a representative strength, composition guides, and a clean framed shot. Show actual functionality and keep capture resolution or performance claims tied to what you tested. Do not present design mockups as game screenshots. Add screenshots to the store and repository only when the real files are available; the public product description contains no placeholder image links.
 
-Preview the store description, download the attachment from the customer delivery path and verify its hash or contents, then confirm that the installation steps and license files remain accessible. Do not claim official approval, universal server compatibility, built-in video export or advanced depth-of-field blur.
+Preview the store description, download the attachment from the customer delivery path and verify its hash or contents, then confirm that the installation steps and license files remain accessible. Do not claim official approval, universal server compatibility, built-in video export or identical rendering across both games.
 
 ## Author notes on the license
 

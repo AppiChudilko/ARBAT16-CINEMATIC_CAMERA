@@ -11,6 +11,10 @@
   const MAX_TAKE_SAMPLES = 9001, MAX_SCENE_SAMPLES = 18002;
   const MAX_HISTORY_BYTES = 16 * 1024 * 1024, MAX_HISTORY_STATES = 50;
   const utf8Bytes = value => new TextEncoder().encode(value).byteLength;
+  const weatherTypes = {
+    gta5: new Set(['CLEAR','EXTRASUNNY','CLOUDS','OVERCAST','RAIN','CLEARING','THUNDER','SMOG','FOGGY','NEUTRAL','SNOW','BLIZZARD','SNOWLIGHT','XMAS','HALLOWEEN']),
+    rdr3: new Set(['SUNNY','CLOUDS','OVERCAST','OVERCASTDARK','RAIN','DRIZZLE','THUNDER','THUNDERSTORM','FOG','MISTY','HIGHPRESSURE','SNOW','BLIZZARD','SNOWLIGHT','GROUNDBLIZZARD','HURRICANE','WHITEOUT','SANDSTORM','SLEET','HAIL'])
+  };
   const starts = scene => { let t = 0; return scene.frames.map(f => {const start = t; t += f.duration; return start;}); };
   let sequence = 0;
   const uid = () => 'k' + Date.now().toString(36) + '_' + (++sequence).toString(36);
@@ -39,6 +43,12 @@
       object(value, ['x', 'y', 'z'], label);
       return Object.fromEntries(['x', 'y', 'z'].map(axis => [axis, number(value[axis], undefined, -limit, limit, label + '.' + axis)]));
     };
+    const weather = (value, label, fallback) => {
+      const game = Director.game === 'gta5' ? 'gta5' : 'rdr3';
+      const name = text(value, fallback, 32, label, /^[A-Za-z0-9_]+$/).toUpperCase();
+      if (!weatherTypes[game].has(name)) throw Error('Invalid value: ' + label + '.');
+      return name;
+    };
     const array = (value,min,max,label) => {
       if (!Array.isArray(value) || value.length < min || value.length > max ||
           Object.keys(value).length !== value.length ||
@@ -56,7 +66,7 @@
       const samples=raw.samples.map((sample,index) => {
         array(sample,12,12,'sample');
         const point=ranges.map(([min,max,integer],column) => number(sample[column],undefined,min,max,'recording sample '+index+' column '+column,integer));
-        point.push(text(sample[11],undefined,32,'recording weather',/^[A-Za-z0-9_]+$/).toUpperCase());
+        point.push(weather(sample[11], 'recording weather'));
         if ((index===0 && point[0]!==0) || point[0]<=previous) throw Error('Recording timestamps must start at zero and increase strictly.');
         if (index<raw.samples.length-1 && point[0]>=seconds) throw Error('Recording timestamp exceeds clip duration.');
         previous=point[0];return point;
@@ -89,7 +99,7 @@
         fov: number(input.fov, 50, 1, 130, 'FOV'), duration: number(input.duration, 3, 0, 600, 'duration'),
         easing: input.easing === undefined ? 'smooth' : input.easing,
         transition: input.transition === undefined ? (input.take === undefined ? 'smooth' : 'hold') : input.transition,
-        weather: text(input.weather, 'SUNNY', 32, 'weather', /^[A-Za-z0-9_]+$/).toUpperCase(),
+        weather: weather(input.weather, 'weather', Director.game === 'gta5' ? 'CLEAR' : 'SUNNY'),
         hour: number(input.hour, 12, 0, 23, 'hour', true), minute: number(input.minute, 0, 0, 59, 'minute', true)
       };
       if (ids.has(f.id)) throw Error('Duplicate keyframe IDs.');

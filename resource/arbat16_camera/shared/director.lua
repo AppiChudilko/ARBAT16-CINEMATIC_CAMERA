@@ -3,10 +3,22 @@ FC = FC or {}
 FC.Director = {}
 local D, C = FC.Director, FC.Core
 
--- Modifier names from femga/rdr3_discoveries/graphics/timecycles/timecycles.lua.
--- Monochrome uses the game's Noir photo effect, not a GTA timecycle name:
--- Halen84/RDR3-Decompiled-Scripts/1491.50/camera_photomode.c, CAM_PM_F_M7.
-D.filters = {
+-- GTA V timecycle names verified against the game's extracted modifier list:
+-- https://github.com/DurtyFree/gta-v-data-dumps/blob/master/timecycleModifiers.json
+-- Stable filter IDs are retained across games.
+local gtaFilters = {
+    {id='none', label='Original'},
+    {id='monochrome', label='Black & White', modifier='blackNwhite'},
+    {id='player_camera', label='Photo Camera', modifier='phone_cam'},
+    {id='cinematic', label='Cinema', modifier='cinema'},
+    {id='flat', label='Neutral', modifier='hud_def_desat_Neutral'},
+    {id='dusk', label='Warm Tone', modifier='hud_def_desat_Trevor'},
+    {id='frontier', label='Urban Contrast', modifier='hud_def_desatcrunch'},
+    {id='dream', label='Soft Focus', modifier='hud_def_focus'}
+}
+-- RDR3 catalog: femga/rdr3_discoveries/graphics/timecycles/timecycles.lua.
+-- Noir photo effect: Halen84/RDR3-Decompiled-Scripts/1491.50/camera_photomode.c.
+local rdrFilters = {
     {id='none', label='Original'},
     {id='monochrome', label='Black & White', postfx='PhotoMode_FilterModern07'},
     {id='player_camera', label='Photo Camera', modifier='PlayerCamera'},
@@ -16,6 +28,7 @@ D.filters = {
     {id='frontier', label='Frontier Trailer', modifier='TRAILER3_Val'},
     {id='dream', label='Deer Dream', modifier='dreams_deer_resting'}
 }
+D.filters = C.game=='gta5' and gtaFilters or rdrFilters
 D.ratios = {'native', '2.39', '2.35', '1.85', '16:9', '4:3', '1:1'}
 local filterSet, ratioSet = {}, {}
 for _, item in ipairs(D.filters) do filterSet[item.id] = item end
@@ -95,8 +108,8 @@ local function preset(id, label, filter, strength, ratio, fov, focus, motion)
 end
 D.presets = {
     preset('natural','Natural','none',0.6,'native',50,10),
-    preset('western_scope','Western Scope','cinematic',0.65,'2.39',45,25),
-    preset('frontier','Frontier','frontier',0.45,'2.35',52,30),
+    preset('western_scope',C.game=='gta5' and 'Cinema Scope' or 'Western Scope','cinematic',0.65,'2.39',45,25),
+    preset('frontier',C.game=='gta5' and 'Urban' or 'Frontier','frontier',0.45,'2.35',52,30),
     preset('quiet_portrait','Quiet Portrait','player_camera',0.5,'4:3',30,4),
     preset('handheld','Handheld','flat',0.3,'1.85',55,10,{type='handheld',amplitude=0.045,frequency=0.6,roll=0.3}),
     preset('dream_sequence','Dream Sequence','dream',0.5,'2.39',40,20,{type='sway',amplitude=0.12,frequency=0.12,roll=0.2})

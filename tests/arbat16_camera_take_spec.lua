@@ -4,7 +4,7 @@ local checks=0
 local function eq(a,b,label)checks=checks+1;assert(a==b,(label or 'value')..': '..tostring(a)..' ~= '..tostring(b))end
 local function close(a,b,label)checks=checks+1;assert(math.abs(a-b)<0.000001,(label or 'value')..': '..a..' ~= '..b)end
 local function sample(t,x,yaw,fov,focus,hour,minute,weather)
-    return {t,x,2,3,0,0,yaw or 0,fov or 50,focus or 10,hour or 12,minute or 0,weather or 'SUNNY'}
+    return {t,x,2,3,0,0,yaw or 0,fov or 50,focus or 10,hour or 12,minute or 0,weather or (C.game=='gta5' and 'CLEAR' or 'SUNNY')}
 end
 local function recording()
     local f=C.defaultFrame({x=999,y=888,z=777},{x=0,y=0,z=99})
@@ -37,9 +37,9 @@ mixed=assert(C.validateScene({frames={recording(),suffix}}))
 close(C.sample(mixed,2.999).pos.x,10,'recorded clip never drifts toward following frame');close(C.sample(mixed,3).pos.x,40,'boundary enters next clip')
 local tiny=recording();tiny.duration=1e-8;tiny.take={duration=1e-8,samples={sample(0,0),sample(1e-8,10)}}
 close(C.sample(assert(C.validateScene({frames={tiny}})),.5e-8).pos.x,5,'all positive clip durations sample correctly')
-local midnight=recording();midnight.duration=2;midnight.take={duration=2,samples={sample(0,0,0,50,10,23,59,'rain'),sample(2,1,0,50,10,0,1,'SUNNY')}}
+local midnight=recording();midnight.duration=2;midnight.take={duration=2,samples={sample(0,0,0,50,10,23,59,'rain'),sample(2,1,0,50,10,0,1,(C.game=='gta5' and 'CLEAR' or 'SUNNY'))}}
 local night=assert(C.validateScene({frames={midnight}}));close(C.sample(night,1).timeHours,0,'clock interpolates across midnight')
-eq(C.sample(night,1).weather,'RAIN','weather held until next timestamp');eq(C.sample(night,2).weather,'SUNNY')
+eq(C.sample(night,1).weather,'RAIN','weather held until next timestamp');eq(C.sample(night,2).weather,(C.game=='gta5' and 'CLEAR' or 'SUNNY'))
 local tolerance=scene();tolerance.frames[1].take.samples[4][1]=3.00005
 eq(assert(C.validateScene(tolerance)).frames[1].take.samples[4][1],3,'endpoint tolerance normalizes to duration')
 

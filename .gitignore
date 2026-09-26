@@ -8,3 +8,6 @@ __pycache__/
 .env.*
 *.zip
 artifacts/
+references/*
+!references/sources.json
+!references/README.md

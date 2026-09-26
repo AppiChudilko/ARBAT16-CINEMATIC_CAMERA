@@ -4,11 +4,17 @@
   else root.CameraDirector = api;
 })(typeof globalThis === 'object' ? globalThis : this, function () {
   'use strict';
-  const filters = [
+  const catalogs = {gta5:[
+    {id:'none',label:'Original'}, {id:'monochrome',label:'Black & White'}, {id:'player_camera',label:'Photo Camera'},
+    {id:'cinematic',label:'Cinema'}, {id:'flat',label:'Neutral'},
+    {id:'dusk',label:'Warm Tone'}, {id:'frontier',label:'Urban Contrast'}, {id:'dream',label:'Soft Focus'}
+  ],rdr3:[
     {id:'none',label:'Original'}, {id:'monochrome',label:'Black & White'}, {id:'player_camera',label:'Photo Camera'},
     {id:'cinematic',label:'Cinematic Exposure'}, {id:'flat',label:'Flat Profile'},
     {id:'dusk',label:'Frontier Dusk'}, {id:'frontier',label:'Frontier Trailer'}, {id:'dream',label:'Deer Dream'}
-  ];
+  ]};
+  let game='rdr3';
+  const filters=[],presets=[];
   const ratios = ['native','2.39','2.35','1.85','16:9','4:3','1:1'];
   const defaults = () => ({look:{filter:'none',strength:.6},framing:{ratio:'native',opacity:1},
     motion:{type:'none',amplitude:.15,frequency:.2,roll:.25}});
@@ -38,13 +44,24 @@
     if (motion) director.motion=motion;
     return {id,name,director,fov,focus};
   };
-  const presets = [
+  const makePresets = () => [
     preset('natural','Natural','none',.6,'native',50,10),
-    preset('western_scope','Western Scope','cinematic',.65,'2.39',45,25),
-    preset('frontier','Frontier','frontier',.45,'2.35',52,30),
+    preset('western_scope',game==='gta5'?'Cinema Scope':'Western Scope','cinematic',.65,'2.39',45,25),
+    preset('frontier',game==='gta5'?'Urban':'Frontier','frontier',.45,'2.35',52,30),
     preset('quiet_portrait','Quiet Portrait','player_camera',.5,'4:3',30,4),
     preset('handheld','Handheld','flat',.3,'1.85',55,10,{type:'handheld',amplitude:.045,frequency:.6,roll:.3}),
     preset('dream_sequence','Dream Sequence','dream',.5,'2.39',40,20,{type:'sway',amplitude:.12,frequency:.12,roll:.2})
   ];
-  return {defaults,validate,filters,presets,ratios};
+  function setGame(value) {
+    const aliases={gta5:'gta5',fivem:'gta5',rdr3:'rdr3',redm:'rdr3'};
+    const normalized=typeof value==='string'&&Object.prototype.hasOwnProperty.call(aliases,value)?aliases[value]:null;
+    if(!normalized)throw Error('Unsupported camera game.');
+    game=normalized;
+    // Keep array references valid for controls that read the packaged catalog.
+    filters.splice(0,filters.length,...catalogs[game].map(item=>({...item})));
+    presets.splice(0,presets.length,...makePresets());
+    return game;
+  }
+  setGame('rdr3');
+  return {defaults,validate,filters,presets,ratios,setGame,get game(){return game;}};
 });

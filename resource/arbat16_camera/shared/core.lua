@@ -1,12 +1,34 @@
--- Pure Lua scene validation and sampling. No game natives are used here.
+-- Pure Lua scene validation and sampling, with shared Cfx game detection at load.
 FC = FC or {}
 FC.Core = {}
 local C = FC.Core
+
+-- GET_GAME_NAME returns framework names on clients and "fxserver" on servers.
+-- Only offline tests without Cfx use the legacy RedM default.
+-- https://github.com/citizenfx/fivem/blob/master/ext/native-decls/GetGameName.md
+local detectedGame = type(GetGameName)=='function' and GetGameName() or 'redm'
+if detectedGame=='fxserver' then
+    assert(type(GetConvar)=='function','Server game detection requires GetConvar')
+    detectedGame=GetConvar('gamename','gta5')
+end
+local gameNames={fivem='gta5',gta5='gta5',redm='rdr3',rdr3='rdr3'}
+C.game=assert(gameNames[detectedGame],'Unsupported game for ARBAT16 Camera: '..tostring(detectedGame))
 
 local floor, min, max = math.floor, math.min, math.max
 local sequence = 0
 local MAX_FRAMES, MAX_DURATION = 200, 3600
 C.MAX_TAKE_SAMPLES, C.MAX_SCENE_SAMPLES = 9001, 18002
+-- Common GTA V weather types; imported names must be valid before reaching a native.
+-- https://github.com/citizenfx/natives/blob/master/MISC/SetWeatherTypeNow.md
+local gtaWeatherTypes = {CLEAR=true,EXTRASUNNY=true,CLOUDS=true,OVERCAST=true,RAIN=true,
+    CLEARING=true,THUNDER=true,SMOG=true,FOGGY=true,NEUTRAL=true,SNOW=true,
+    BLIZZARD=true,SNOWLIGHT=true,XMAS=true,HALLOWEEN=true}
+local rdrWeatherTypes = {SUNNY=true,CLOUDS=true,OVERCAST=true,OVERCASTDARK=true,
+    RAIN=true,DRIZZLE=true,THUNDER=true,THUNDERSTORM=true,FOG=true,MISTY=true,
+    HIGHPRESSURE=true,SNOW=true,BLIZZARD=true,SNOWLIGHT=true,GROUNDBLIZZARD=true,
+    HURRICANE=true,WHITEOUT=true,SANDSTORM=true,SLEET=true,HAIL=true}
+C.weatherTypes=C.game=='gta5' and gtaWeatherTypes or rdrWeatherTypes
+C.defaultWeather=C.game=='gta5' and 'CLEAR' or 'SUNNY'
 
 function C.finite(value)
     return type(value) == 'number' and value == value and value ~= math.huge and value ~= -math.huge
@@ -56,7 +78,7 @@ function C.defaultFrame(pos, rot)
     return {
         id = ('frame_%06d'):format(sequence), label = ('Camera %02d'):format(sequence),
         pos = defaultVector(pos), rot = defaultVector(rot), fov = 50,
-        duration = 3, easing = 'smooth', transition = 'smooth', weather = 'SUNNY',
+        duration = 3, easing = 'smooth', transition = 'smooth', weather = C.defaultWeather,
         hour = 12, minute = 0, dof = { enabled = false, focus = 10, near = 1, far = 100, strength = 0.5 }
     }
 end
@@ -88,6 +110,14 @@ local function stringValue(value, fallback, limit, path, pattern)
     end
     if pattern and not value:match(pattern) then return fail(path, 'invalid characters') end
     return value
+end
+
+local function weather(value, fallback, path)
+    local out, err = stringValue(value, fallback, 32, path, '^[%w_]+$')
+    if not out then return nil, err end
+    out = out:upper()
+    if not C.weatherTypes[out] then return fail(path, 'unsupported weather type for '..C.game) end
+    return out
 end
 
 local vectorFields = { x = true, y = true, z = true }
@@ -135,9 +165,8 @@ local function validateTake(raw, path)
             point[column], err = number(input[column],nil,range[1],range[2],pointPath..'['..column..']',range[3])
             if point[column] == nil then return nil, err end
         end
-        point[12], err = stringValue(input[12],nil,32,pointPath..'[12]','^[%w_]+$')
+        point[12], err = weather(input[12],nil,pointPath..'[12]')
         if not point[12] then return nil, err end
-        point[12] = point[12]:upper()
         if (i == 1 and point[1] ~= 0) or point[1] <= previous then return fail(pointPath..'[1]','timestamps must start at zero and increase strictly') end
         if i < count and point[1] >= duration then return fail(pointPath..'[1]','nonfinal timestamp must be below take duration') end
         previous=point[1];out.samples[i]=point
@@ -209,9 +238,8 @@ function C.validateScene(raw)
         if frame.duration == 0 and index < count and frame.transition ~= 'cut' then
             return fail(path .. '.duration', 'only cuts or the final hold may have zero duration')
         end
-        frame.weather, err = stringValue(input.weather, 'SUNNY', 32, path .. '.weather', '^[%w_]+$')
+        frame.weather, err = weather(input.weather, C.defaultWeather, path .. '.weather')
         if not frame.weather then return nil, err end
-        frame.weather = frame.weather:upper()
         frame.hour, err = number(input.hour, 12, 0, 23, path .. '.hour', true)
         if frame.hour == nil then return nil, err end
         frame.minute, err = number(input.minute, 0, 0, 59, path .. '.minute', true)

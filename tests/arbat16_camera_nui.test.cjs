@@ -9,7 +9,7 @@ const {JSDOM,VirtualConsole} = jsdom;
 const web = path.join(__dirname, '../resource/arbat16_camera/web');
 const flush = async () => { for (let i=0;i<4;i++) await new Promise(setImmediate); };
 
-function fixture(nativeFlightInput) {
+function fixture(nativeFlightInput,game=process.env.CAMERA_GAME||'gta5') {
   const errors=[],virtualConsole=new VirtualConsole();virtualConsole.on('jsdomError',error=>errors.push(error));
   const dom = new JSDOM(fs.readFileSync(path.join(web, 'index.html'), 'utf8'), {
     url:'https://cfx-nui-arbat16_camera/', runScripts:'outside-only', pretendToBeVisual:true,virtualConsole
@@ -32,10 +32,11 @@ function fixture(nativeFlightInput) {
   w.eval(fs.readFileSync(path.join(web,'director.js'),'utf8'));
   w.eval(fs.readFileSync(path.join(web,'model.js'),'utf8'));
   w.eval(fs.readFileSync(path.join(web,'app.js'),'utf8'));
-  const message=data=>w.dispatchEvent(new w.MessageEvent('message',{data:w.JSON.parse(JSON.stringify(data))}));
-  const scene={name:'Input regression',frames:[{id:'first',pos:{x:0,y:0,z:2},rot:{x:0,y:0,z:0}},{id:'second',pos:{x:0,y:10,z:2},rot:{x:0,y:0,z:0}}]};
+  const message=data=>{if(data.type==='open'){game=data.game??game;data={...data,game,capabilities:{focusDistance:true,dofBlur:game==='gta5',nativeFlightInput,...data.capabilities}};}w.dispatchEvent(new w.MessageEvent('message',{data:w.JSON.parse(JSON.stringify(data))}));};
+  const weather=game==='gta5'?'CLEAR':'SUNNY';
+  const scene={name:'Input regression',frames:[{id:'first',pos:{x:0,y:0,z:2},rot:{x:0,y:0,z:0},weather},{id:'second',pos:{x:0,y:10,z:2},rot:{x:0,y:0,z:0},weather}]};
   message({type:'open',scene,camera:scene.frames[0],revision:1,stateSequence:1,capabilities:{nativeFlightInput}});
-  return {w,requests,intervals,pending,message,scene,onRequest:fn=>{actionHandler=fn;},close:()=>{w.close();assert.deepEqual(errors.map(error=>error.message),[],'Unexpected DOM errors');},pointerRequests:()=>pointerRequests,
+  return {w,requests,intervals,pending,message,scene,weather,onRequest:fn=>{actionHandler=fn;},close:()=>{w.close();assert.deepEqual(errors.map(error=>error.message),[],'Unexpected DOM errors');},pointerRequests:()=>pointerRequests,
     el:id=>w.document.getElementById(id)};
 }
 
@@ -83,6 +84,133 @@ function change(f,id,value){
   const el=f.el(id);el.value=String(value);el.dispatchEvent(new f.w.Event('input',{bubbles:true}));el.dispatchEvent(new f.w.Event('change',{bubbles:true}));
 }
 const latest=(f,action)=>f.requests.filter(r=>r.action===action).at(-1);
+
+test('FiveM weather choices reach the live world and persist on selected route points',async()=>{
+  const f=fixture(true,'gta5');
+  try{
+    await flush();
+    assert.equal(f.w.document.title,'Arbat16 Camera · FiveM');
+    assert.equal(f.w.document.querySelector('.version').textContent,'1.8.0 · FiveM');
+    const weather=['CLEAR','EXTRASUNNY','CLOUDS','OVERCAST','RAIN','CLEARING','THUNDER','SMOG','FOGGY','XMAS','SNOW','SNOWLIGHT','BLIZZARD','HALLOWEEN','NEUTRAL'];
+    assert.deepEqual([...f.el('weather').options].map(option=>option.value),weather);
+    assert.equal(f.el('weather').value,'CLEAR');
+    for(const value of weather){
+      const previous=f.requests.filter(request=>request.action==='environment').length;
+      change(f,'weather',value);await flush();
+      assert.equal(f.requests.filter(request=>request.action==='environment').length,previous+1);
+      assert.deepEqual(latest(f,'environment'),{action:'environment',weather:value,hour:12,minute:0});
+    }
+    assert.equal(latest(f,'scene'),undefined,'live environment changes do not silently edit the route');
+    f.el('track').querySelector('[data-id="first"]').click();
+    change(f,'weather','EXTRASUNNY');change(f,'time-of-day','21:37');await flush();
+    assert.deepEqual(latest(f,'environment'),{action:'environment',weather:'EXTRASUNNY',hour:21,minute:37});
+    const saved=latest(f,'scene').scene;
+    assert.equal(saved.frames[0].weather,'EXTRASUNNY');assert.equal(saved.frames[0].hour,21);assert.equal(saved.frames[0].minute,37);
+    assert.equal(saved.frames[1].weather,'CLEAR','unselected route points keep their weather');
+    const count=f.requests.length;change(f,'time-of-day','25:99');await flush();assert.equal(f.requests.length,count);
+  }finally{f.close();}
+});
+
+test('FiveM vehicle attachment retains entity rotation options and existing attachment modes',async()=>{
+  const f=fixture(true,'gta5');
+  try{
+    await flush();
+    for(const [name,mode,rotate] of [['Vehicle','vehicle',true],['Vehicle','vehicle',false],['At Crosshair','aim',true],['Player','player',true],['Detach','detach',true]]){
+      f.el('attach-button').click();
+      assert.equal(f.el('modal').open,true);assert.doesNotMatch(f.el('modal-body').textContent,/horse|wagon/i);
+      f.el('modal-body').querySelector('input[type=checkbox]').checked=rotate;
+      const action=[...f.el('modal-body').querySelectorAll('button')].find(button=>button.textContent===name);assert.ok(action);
+      action.click();await flush();assert.equal(f.el('modal').open,false);
+      assert.deepEqual(latest(f,'attach'),{action:'attach',mode,rotate});
+    }
+    f.message({type:'state',stateSequence:2,attachment:true});assert.equal(f.el('attachment-label').textContent,'Attached camera');
+    f.message({type:'state',stateSequence:3,attachment:false});assert.equal(f.el('attachment-label').textContent,'Free camera');
+  }finally{f.close();}
+});
+
+test('failed FiveM transport requests show the correct platform in the error',async()=>{
+  const f=fixture(true,'gta5');
+  try{
+    await flush();f.onRequest(data=>data.action==='environment'?Promise.resolve({ok:false}):undefined);
+    change(f,'weather','RAIN');await flush();
+    assert.match(f.el('toasts').textContent,/The FiveM camera did not accept the request\./);
+    assert.doesNotMatch(f.el('toasts').textContent,/RedM/);
+  }finally{f.close();}
+});
+
+test('depth of field controls restore camera values and preserve enabled, focus and strength on route points',async()=>{
+  const f=fixture(true,'gta5');
+  try{
+    await flush();assert.equal(f.el('dof-enabled').checked,false);assert.equal(f.el('dof-strength-value').value,'0.5');
+    f.el('dof-enabled').checked=true;f.el('dof-enabled').dispatchEvent(new f.w.Event('change'));await flush();
+    assert.deepEqual(latest(f,'lens'),{action:'lens',dof:{enabled:true}});
+    f.message({type:'state',stateSequence:2,camera:{...f.scene.frames[0],dof:{enabled:true,focus:25,strength:.7}}});
+    assert.equal(f.el('dof-enabled').checked,true);assert.equal(f.el('focus').value,'25');assert.equal(f.el('dof-strength').value,'0.7');assert.equal(f.el('dof-strength-output').textContent,'0.70');
+    change(f,'dof-strength-value',.425);await flush();assert.deepEqual(latest(f,'lens'),{action:'lens',dof:{strength:.425}});
+    const count=f.requests.length;change(f,'dof-strength-value','');change(f,'dof-strength-value',1.01);await flush();assert.equal(f.requests.length,count);
+    change(f,'focus',27.5);await flush();assert.deepEqual(latest(f,'lens'),{action:'lens',dof:{focus:27.5}});
+    f.el('track').querySelector('[data-id="first"]').click();assert.equal(f.el('dof-enabled').checked,false);
+    f.el('dof-enabled').checked=true;f.el('dof-enabled').dispatchEvent(new f.w.Event('change'));await flush();
+    change(f,'dof-strength-value',.8);await flush();change(f,'focus',12.3);await flush();
+    const scene=latest(f,'scene').scene;
+    assert.equal(scene.frames[0].dof.enabled,true);assert.equal(scene.frames[0].dof.strength,.8);assert.equal(scene.frames[0].dof.focus,12.3);
+    assert.equal(scene.frames[1].dof.enabled,false);assert.equal(scene.frames[1].dof.strength,.5);
+    f.el('dof-enabled').checked=false;f.el('dof-enabled').dispatchEvent(new f.w.Event('change'));await flush();
+    assert.deepEqual(latest(f,'lens'),{action:'lens',dof:{enabled:false}});assert.equal(latest(f,'scene').scene.frames[0].dof.enabled,false);
+  }finally{f.close();}
+});
+
+test('RedM keeps its weather, mounts and focus without exposing unsupported blur controls',async()=>{
+  const f=fixture(true,'rdr3');
+  try{
+    await flush();assert.equal(f.el('editor').hidden,false);assert.equal(f.w.document.title,'Arbat16 Camera · RedM');
+    assert.equal(f.w.document.querySelector('.version').textContent,'1.8.0 · RedM');
+    assert.deepEqual([...f.el('weather').options].map(option=>option.value),['SUNNY','CLOUDS','OVERCAST','OVERCASTDARK','RAIN','DRIZZLE','THUNDER','THUNDERSTORM','FOG','MISTY','HIGHPRESSURE','SNOW','BLIZZARD','SNOWLIGHT','GROUNDBLIZZARD','HURRICANE','WHITEOUT','SANDSTORM','SLEET','HAIL']);
+    assert.equal(f.el('weather').value,'SUNNY');
+    assert.equal([...f.el('look-filter').options].find(option=>option.value==='frontier').textContent,'Frontier Trailer');
+    assert.equal([...f.el('preset-select').options].find(option=>option.value==='western_scope').textContent,'Western Scope');
+    for(const element of f.w.document.querySelectorAll('[data-dof-blur]'))assert.equal(element.hidden,true);
+    for(const id of ['dof-enabled','dof-strength','dof-strength-value'])assert.equal(f.el(id).disabled,true);
+    const count=f.requests.length;f.el('dof-enabled').checked=true;f.el('dof-enabled').dispatchEvent(new f.w.Event('change'));change(f,'dof-strength-value',.8);await flush();assert.equal(f.requests.length,count);
+    change(f,'focus',42);await flush();assert.deepEqual(latest(f,'lens'),{action:'lens',dof:{focus:42}});
+    change(f,'weather','SANDSTORM');await flush();assert.equal(latest(f,'environment').weather,'SANDSTORM');
+    f.el('attach-button').click();const buttons=[...f.el('modal-body').querySelectorAll('button')];assert.equal(buttons.some(button=>button.textContent==='Vehicle'),false);
+    buttons.find(button=>button.textContent==='Horse / Wagon').click();await flush();assert.deepEqual(latest(f,'attach'),{action:'attach',mode:'mount',rotate:true});
+    f.onRequest(data=>data.action==='environment'?Promise.resolve({ok:false}):undefined);change(f,'weather','RAIN');await flush();assert.match(f.el('toasts').textContent,/The RedM camera did not accept the request\./);
+  }finally{f.close();}
+});
+
+test('recording locks DOF mode and strength while keeping captured focus distance editable',async()=>{
+  const f=fixture(true,'gta5');
+  try{
+    await flush();f.message({type:'state',stateSequence:2,recording:true});
+    for(const id of ['dof-enabled','dof-strength','dof-strength-value'])assert.equal(f.el(id).disabled,true);
+    assert.equal(f.el('focus').disabled,false);
+    const count=f.requests.length;f.el('dof-enabled').checked=true;f.el('dof-enabled').dispatchEvent(new f.w.Event('change'));change(f,'dof-strength-value',.8);await flush();assert.equal(f.requests.length,count);
+    change(f,'focus',15);await flush();assert.deepEqual(latest(f,'lens'),{action:'lens',dof:{focus:15}});
+    f.el('track').querySelector('[data-id="first"]').click();assert.equal(f.el('dof-strength-value').disabled,true,'selecting a normal point cannot bypass the recording lock');
+    f.message({type:'state',stateSequence:3,recording:false});
+    for(const id of ['dof-enabled','dof-strength','dof-strength-value'])assert.equal(f.el(id).disabled,false,'stopping while a point is selected restores its controls');
+  }finally{f.close();}
+});
+
+test('reopening with another game switches catalogs before validation and honors the blur capability',async()=>{
+  const f=fixture(true,'gta5');
+  try{
+    await flush();assert.equal(f.el('dof-enabled').disabled,false);
+    f.message({type:'close'});
+    const scene={...f.scene,frames:f.scene.frames.map(frame=>({...frame,weather:'SANDSTORM'}))};
+    f.message({type:'config',game:'rdr3',capabilities:{dofBlur:false,focusDistance:true}});
+    f.message({type:'open',game:'rdr3',scene,camera:scene.frames[0],capabilities:{dofBlur:true}});
+    assert.equal(f.el('editor').hidden,false);assert.equal(f.el('weather').value,'SANDSTORM');assert.equal(f.el('dof-enabled').disabled,true,'RedM never exposes GTA blur even with a stray capability');
+    assert.equal([...f.el('preset-select').options].find(option=>option.value==='western_scope').textContent,'Western Scope');
+    f.message({type:'close'});f.message({type:'open',game:'gta5',scene:f.scene,camera:f.scene.frames[0],capabilities:{dofBlur:false}});
+    assert.equal(f.el('editor').hidden,false);assert.equal(f.el('weather').value,'CLEAR');assert.equal(f.el('dof-enabled').disabled,true);
+    assert.equal([...f.el('preset-select').options].find(option=>option.value==='western_scope').textContent,'Cinema Scope');
+    assert.equal([...f.el('look-filter').options].find(option=>option.value==='frontier').textContent,'Urban Contrast');
+    assert.equal(f.el('focus').disabled,false);
+  }finally{f.close();}
+});
 
 test('precise values route to Lua, blank / out-of-range numbers never write zero',async()=>{
   const f=fixture(true);
@@ -272,21 +400,21 @@ test('world camera markers stay separate from path guides and safely select save
 
 test('dense recordings render as one retimeable clip without exposing destructive pose edits',async()=>{
   const f=fixture(true);try{
-    await flush();const samples=Array.from({length:9001},(_,i)=>[i/30,i/300,0,2,0,0,i/300,50,10,12,0,'SUNNY']);
+    await flush();const samples=Array.from({length:9001},(_,i)=>[i/30,i/300,0,2,0,0,i/300,50,10,12,0,f.weather]);
     const take={...f.scene.frames[0],id:'recorded',label:'Recorded Take',duration:300,take:{duration:300,samples}};
     f.message({type:'scene',revision:2,scene:{name:'Full recording',frames:[take,f.scene.frames[1]]}});
     const clips=f.el('track').querySelectorAll('.keyframe');assert.equal(clips.length,2);assert.equal(f.el('track').querySelectorAll('.recorded-take').length,1);assert.match(clips[0].dataset.help,/9001 samples/);
     clips[0].dispatchEvent(new f.w.MouseEvent('dblclick',{bubbles:true}));await flush();assert.equal(latest(f,'seek').time,0);assert.equal(latest(f,'setCamera'),undefined);
     clips[0].click();assert.equal(f.el('duration').disabled,false);assert.equal(f.el('frame-label').disabled,false);assert.equal(f.el('replace-frame').disabled,true);
-    for(const id of ['fov','fov-value','roll','roll-value','focus','weather','time-of-day','easing','transition','pos-x','in-x','out-x'])assert.equal(f.el(id).disabled,true,id+' must not edit a recorded sample silently');
+    for(const id of ['fov','fov-value','roll','roll-value','focus','dof-enabled','dof-strength','dof-strength-value','weather','time-of-day','easing','transition','pos-x','in-x','out-x'])assert.equal(f.el(id).disabled,true,id+' must not edit a recorded sample silently');
     assert.match(f.el('take-timing').textContent,/9001 captured samples/);change(f,'duration',150);await flush();const edited=latest(f,'scene').scene.frames[0];assert.equal(edited.duration,150);assert.equal(edited.take.duration,300);assert.equal(edited.take.samples.length,9001);assert.deepEqual(edited.take.samples.at(-1),samples.at(-1));
-    f.el('deselect-frame').click();assert.equal(f.el('fov-value').disabled,false);assert.equal(f.el('weather').disabled,false);
+    f.el('deselect-frame').click();assert.equal(f.el('fov-value').disabled,false);assert.equal(f.el('weather').disabled,false);assert.equal(f.el('dof-enabled').disabled,f.weather==='SUNNY');assert.equal(f.el('dof-strength-value').disabled,f.weather==='SUNNY');
   }finally{f.close();}
 });
 
 test('recording JSON above the old 256 KB limit imports and the 4 MB ceiling remains enforced',async()=>{
   const f=fixture(true);try{
-    await flush();const samples=Array.from({length:9001},(_,i)=>[i/30,i/300,0,2,0,0,i/300,50,10,12,0,'SUNNY']);
+    await flush();const samples=Array.from({length:9001},(_,i)=>[i/30,i/300,0,2,0,0,i/300,50,10,12,0,f.weather]);
     const raw=JSON.stringify({name:'Imported recording',frames:[{...f.scene.frames[0],id:'take',duration:300,take:{duration:300,samples}}]});assert.ok(Buffer.byteLength(raw)>262144);
     f.w.document.querySelector('[data-action=import]').click();f.el('modal-body').querySelector('textarea').value=raw;[...f.el('modal-body').querySelectorAll('button')].find(button=>button.textContent==='Import').click();await flush();assert.equal(latest(f,'scene').scene.frames[0].take.samples.length,9001);assert.equal(f.el('modal').open,false);
     const count=f.requests.filter(request=>request.action==='scene').length;f.w.document.querySelector('[data-action=import]').click();f.el('modal-body').querySelector('textarea').value=' '.repeat(4*1024*1024)+'{}';[...f.el('modal-body').querySelectorAll('button')].find(button=>button.textContent==='Import').click();await flush();assert.equal(f.requests.filter(request=>request.action==='scene').length,count);assert.match(f.el('toasts').textContent,/File exceeds 4 MB/);

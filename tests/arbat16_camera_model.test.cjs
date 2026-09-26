@@ -3,9 +3,10 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const M = require('../resource/arbat16_camera/web/model.js');
 const D = require('../resource/arbat16_camera/web/director.js');
+D.setGame('gta5');
 
 const frame = (id = 'frame_1') => ({id, label: 'Кадр', pos: {x: 1, y: 2, z: 3}, rot: {x: 0, y: 0, z: 350},
-  fov: 50, duration: 3, easing: 'smooth', transition: 'smooth', weather: 'SUNNY', hour: 12, minute: 0,
+  fov: 50, duration: 3, easing: 'smooth', transition: 'smooth', weather: 'CLEAR', hour: 12, minute: 0,
   dof: {enabled: false, focus: 10, near: 1, far: 100, strength: .5}});
 const scene = (count = 2) => ({version: 1, name: 'Test', frames: Array.from({length: count}, (_, i) => frame('frame_' + (i + 1))), loop: false, speed: 1});
 
@@ -18,6 +19,7 @@ test('default scene and frames normalize to the Lua schema without retaining inp
   assert.equal(normalized.frames[0].label, 'Camera 1');
   assert.equal(normalized.frames[0].fov, 50);
   assert.equal(normalized.frames[0].duration, 3);
+  assert.equal(normalized.frames[0].weather, 'CLEAR');
   assert.deepEqual(normalized.frames[0].dof, {enabled: false, focus: 10, near: 1, far: 100, strength: .5});
   normalized.frames[0].pos.x = 99;
   assert.equal(raw.frames[0].pos.x, 0);
@@ -35,7 +37,7 @@ test('JSON imports reject malformed scene structure and values', () => {
     s => { s.frames[0].duration = -1; }, s => { s.frames[0].duration = 601; },
     s => { s.frames[0].fov = 0; }, s => { s.frames[0].fov = 131; },
     s => { s.frames[0].easing = {}; }, s => { s.frames[0].transition = 'unknown'; },
-    s => { s.frames[0].weather = 'SUNNY;'; }, s => { s.frames[0].weather = ''; },
+    s => { s.frames[0].weather = 'CLEAR;'; }, s => { s.frames[0].weather = ''; },
     s => { s.frames[0].hour = 24; }, s => { s.frames[0].minute = 1.5; },
     s => { s.frames[0].dof = false; }, s => { s.frames[0].dof.enabled = 'true'; },
     s => { s.frames[0].dof.near = 101; }, s => { s.frames[0].dof.far = 0; },
@@ -56,13 +58,13 @@ test('JSON imports reject malformed scene structure and values', () => {
 
 test('Lua boundary ranges and zero-duration cut/final hold are accepted', () => {
   const s = scene();
-  Object.assign(s.frames[0], {duration: 0, transition: 'cut', fov: 1, weather: 'sunny'});
+  Object.assign(s.frames[0], {duration: 0, transition: 'cut', fov: 1, weather: 'clear'});
   s.frames[0].rot.z = 360000;
   s.frames[0].handleOut = {x: 100000, y: -100000, z: 0};
   s.frames[0].dof = {enabled: true, focus: .01, near: 0, far: 100000, strength: 1};
   s.frames[1].duration = 0;
   const validated = M.validate(s);
-  assert.equal(validated.frames[0].weather, 'SUNNY');
+  assert.equal(validated.frames[0].weather, 'CLEAR');
   assert.equal(M.duration(validated), 0);
   for (const transition of ['linear', 'smooth', 'hold']) {
     s.frames[0].transition = transition;
@@ -203,9 +205,18 @@ test('director catalog presets and strict bounds agree with the persistence sche
 test('Black & White is available in both catalogs and survives scene history and export', () => {
   const fs=require('node:fs'),path=require('node:path');
   const lua=fs.readFileSync(path.join(__dirname,'../resource/arbat16_camera/shared/director.lua'),'utf8');
-  const catalog=lua.slice(lua.indexOf('D.filters ='),lua.indexOf('D.ratios ='));
-  const luaFilters=[...catalog.matchAll(/\{id='([^']+)', label='([^']+)'/g)].map(([,id,label])=>({id,label}));
-  assert.deepEqual(D.filters,luaFilters,'Lua and NUI expose matching filter IDs and labels');
+  const filtersReference=D.filters,presetsReference=D.presets;
+  for(const [game,start,end] of [['gta5','local gtaFilters =','local rdrFilters ='],['rdr3','local rdrFilters =','D.filters =']]){
+    D.setGame(game);
+    const catalog=lua.slice(lua.indexOf(start),lua.indexOf(end));
+    const luaFilters=[...catalog.matchAll(/\{id='([^']+)', label='([^']+)'/g)].map(([,id,label])=>({id,label}));
+    assert.deepEqual(D.filters,luaFilters,'Lua and NUI expose matching '+game+' filter IDs and labels');
+    assert.equal(D.filters,filtersReference,'changing games preserves the filter array reference');
+    assert.equal(D.presets,presetsReference,'changing games preserves the preset array reference');
+    assert.equal(D.presets[1].name,game==='gta5'?'Cinema Scope':'Western Scope');
+    assert.equal(D.presets[2].name,game==='gta5'?'Urban':'Frontier');
+  }
+  D.setGame('gta5');
   assert.deepEqual(D.filters.find(f=>f.id==='monochrome'),{id:'monochrome',label:'Black & White'});
   const input=scene();input.director=D.defaults();const editor=new M.Editor(input);
   editor.edit(s=>{s.director.look={filter:'monochrome',strength:1};});
@@ -217,7 +228,35 @@ test('Black & White is available in both catalogs and survives scene history and
   for(const strength of [-.01,1.01,NaN])assert.throws(()=>D.validate({look:{filter:'monochrome',strength}}));
 });
 
-const takeSample = (t,x=0) => [t,x,2,3,0,0,350,50,10,12,0,'SUNNY'];
+test('game detection aliases and weather validation stay matched in imported frames and takes',()=>{
+  const choices={gta5:['CLEAR','EXTRASUNNY','CLOUDS','OVERCAST','RAIN','CLEARING','THUNDER','SMOG','FOGGY','NEUTRAL','SNOW','BLIZZARD','SNOWLIGHT','XMAS','HALLOWEEN'],
+    rdr3:['SUNNY','CLOUDS','OVERCAST','OVERCASTDARK','RAIN','DRIZZLE','THUNDER','THUNDERSTORM','FOG','MISTY','HIGHPRESSURE','SNOW','BLIZZARD','SNOWLIGHT','GROUNDBLIZZARD','HURRICANE','WHITEOUT','SANDSTORM','SLEET','HAIL']};
+  try{
+    for(const [alias,game] of [['fivem','gta5'],['redm','rdr3']]){
+      assert.equal(D.setGame(alias),game);assert.equal(D.game,game);
+      const input=scene(1);delete input.frames[0].weather;
+      assert.equal(M.validate(input).frames[0].weather,game==='gta5'?'CLEAR':'SUNNY');
+      for(const name of choices[game]){
+        input.frames[0].weather=name.toLowerCase();
+        assert.equal(M.validate(input).frames[0].weather,name);
+        input.frames[0].take={duration:1,samples:[[0,1,2,3,0,0,0,50,10,12,0,name.toLowerCase()],[1,2,2,3,0,0,0,50,10,12,0,name]]};
+        assert.equal(M.validate(input).frames[0].take.samples[0][11],name);
+        delete input.frames[0].take;
+      }
+      for(const bad of ['UNKNOWN_WEATHER',game==='gta5'?'SUNNY':'CLEAR']){
+        input.frames[0].weather=bad;assert.throws(()=>M.validate(input));
+        input.frames[0].weather=choices[game][0];
+        input.frames[0].take={duration:1,samples:[[0,1,2,3,0,0,0,50,10,12,0,choices[game][0]],[1,2,2,3,0,0,0,50,10,12,0,bad]]};
+        assert.throws(()=>M.validate(input));delete input.frames[0].take;
+      }
+    }
+    for(const bad of ['fxserver','unknown','__proto__','constructor',null,{}]){
+      const previous=D.game;assert.throws(()=>D.setGame(bad));assert.equal(D.game,previous);
+    }
+  }finally{D.setGame('gta5');}
+});
+
+const takeSample = (t,x=0) => [t,x,2,3,0,0,350,50,10,12,0,'CLEAR'];
 const takeScene = () => {
   const s=scene(1);s.frames[0].transition=undefined;
   s.frames[0].take={duration:3,samples:[takeSample(0),takeSample(1),takeSample(2,10),takeSample(3,10)]};
@@ -264,7 +303,7 @@ test('dense recording undo and redo share a serialized byte budget without losin
   large.frames[0].duration=300;
   large.frames[0].take={duration:300,samples:Array.from({length:9001},(_,i)=>[
     i/30,Math.sin(i)*12345.67890123456,Math.cos(i)*23456.78901234567,123.4567890123456,
-    12.34567890123456,23.45678901234567,34.56789012345678,45.67890123456789,56.7890123456789,12,30,'OVERCASTDARK'])};
+    12.34567890123456,23.45678901234567,34.56789012345678,45.67890123456789,56.7890123456789,12,30,'OVERCAST'])};
   large.frames.push({...M.clone(large.frames[0]),id:'dense_2'});
   const editor=new M.Editor(large);
   const sceneBytes=Buffer.byteLength(JSON.stringify(editor.scene),'utf8');

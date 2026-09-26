@@ -1,10 +1,10 @@
 fx_version 'cerulean'
-game 'rdr3'
+games { 'gta5', 'rdr3' }
 rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships.'
 
 author 'Arbat16 Camera'
-description 'Standalone Lua cinematic camera and keyframe editor for RedM'
-version '1.7.1'
+description 'Standalone cinematic camera for FiveM and RedM with automatic game detection'
+version '1.8.0'
 license 'ARBAT16 Source-Available License 1.0 (No Resale)'
 
 shared_scripts { 'config.lua', 'shared/core.lua', 'shared/director.lua', 'shared/flight.lua' }

@@ -853,7 +853,7 @@ test('dense recordings survive workspace reconnect and named scene storage at fu
         frame.id = 'take_' .. clip; frame.duration = 300
         frame.take = {duration = 300, samples = {}}
         for i = 0, 9000 do
-            frame.take.samples[i + 1] = {i / 30, i < 4500 and 0 or 10, 0, 5, 0, 0, 0, 50, 10, 12, 0, 'SUNNY'}
+            frame.take.samples[i + 1] = {i / 30, i < 4500 and 0 or 10, 0, 5, 0, 0, 0, 50, 10, 12, 0, (GetConvar and GetConvar('gamename','gta5')=='gta5' and 'CLEAR' or 'SUNNY')}
         end
         raw.scene.frames[clip] = frame
     end

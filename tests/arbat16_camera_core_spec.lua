@@ -102,11 +102,11 @@ s.frames[3] = middle
 close(C.sample(s, 1).pos.x, 4.375, 'Catmull-Rom uses adjacent control point')
 s = scene()
 s.frames[1].hour, s.frames[2].hour = 23, 1
-s.frames[1].weather, s.frames[2].weather = 'RAIN', 'SUNNY'
+s.frames[1].weather, s.frames[2].weather = 'RAIN', (C.game=='gta5' and 'CLEAR' or 'SUNNY')
 close(C.sample(s, 1).timeHours, 0, 'clock crosses midnight by shortest route')
 equal(C.sample(s, 1).hour, 0)
 equal(C.sample(s, 1).weather, 'RAIN', 'weather sticks to source keyframe')
-equal(C.sample(s, 2).weather, 'SUNNY')
+equal(C.sample(s, 2).weather, (C.game=='gta5' and 'CLEAR' or 'SUNNY'))
 s.frames[2].dof.enabled, s.frames[2].dof.focus = true, 30
 p = C.sample(s, 1)
 equal(p.dof.enabled, true)
@@ -153,13 +153,13 @@ invalid(function(v)
     end
 end, '3600')
 local raw = scene()
-raw.frames[1].weather = 'sunny'
+raw.frames[1].weather = (C.game=='gta5' and 'clear' or 'sunny')
 raw.frames[1].dof = nil
 raw.frames[1].easing, raw.frames[1].fov, raw.name = nil, nil, nil
 s = assert(C.validateScene(raw))
 equal(s.name, 'Untitled')
 equal(C.defaultFrame().label:match('^Camera %d+$') ~= nil, true, 'new frame names are English')
-equal(s.frames[1].weather, 'SUNNY')
+equal(s.frames[1].weather, (C.game=='gta5' and 'CLEAR' or 'SUNNY'))
 equal(s.frames[1].dof.focus, 10)
 equal(s.frames[1].easing, 'smooth')
 equal(s.frames[1].fov, 50)

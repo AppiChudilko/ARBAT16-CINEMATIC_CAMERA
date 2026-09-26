@@ -1,9 +1,11 @@
-/* UI transport only. The RedM camera, interpolation and persistence live in Lua. */
+/* UI transport only. The game camera, interpolation and persistence live in Lua. */
 (() => {
   'use strict';
   const M = CameraModel, D = CameraDirector, $ = id => document.getElementById(id);
   const maxSceneBytes=4*1024*1024;
   const isNui = typeof GetParentResourceName === 'function';
+  let game='rdr3',dofBlur=false;
+  const gameName=()=>game==='gta5'?'FiveM':'RedM';
   const editor = new M.Editor();
   const state = {open:false, flight:false, nativeFlightInput:false, playing:false, recording:false, time:0, clean:false, camera:null, attachment:false, stabilization:'off', director:D.defaults()};
   const stabilizationLevels=['off','light','medium','strong'];
@@ -93,12 +95,27 @@
     'motion-amplitude':['motion','amplitude',2,' m'], 'motion-frequency':['motion','frequency',2,' Hz'],
     'motion-roll':['motion','roll',2,'°']
   };
-  const weather = {SUNNY:'Sunny',CLOUDS:'Cloudy',OVERCAST:'Overcast',OVERCASTDARK:'Dark Overcast',RAIN:'Rain',DRIZZLE:'Drizzle',THUNDER:'Thunder',THUNDERSTORM:'Thunderstorm',FOG:'Fog',MISTY:'Mist',HIGHPRESSURE:'High Pressure',SNOW:'Snow',BLIZZARD:'Blizzard',SNOWLIGHT:'Light Snow',GROUNDBLIZZARD:'Ground Blizzard',HURRICANE:'Hurricane',WHITEOUT:'Whiteout',SANDSTORM:'Sandstorm',SLEET:'Sleet',HAIL:'Hail'};
-  for (const [value,label] of Object.entries(weather)) { const o = document.createElement('option'); o.value=value; o.textContent=label; $('weather').append(o); }
+  const weatherByGame = {
+    gta5:{CLEAR:'Clear',EXTRASUNNY:'Extra Sunny',CLOUDS:'Cloudy',OVERCAST:'Overcast',RAIN:'Rain',CLEARING:'Clearing',THUNDER:'Thunder',SMOG:'Smog',FOGGY:'Foggy',XMAS:'Christmas Snow',SNOW:'Snow',SNOWLIGHT:'Light Snow',BLIZZARD:'Blizzard',HALLOWEEN:'Halloween',NEUTRAL:'Neutral'},
+    rdr3:{SUNNY:'Sunny',CLOUDS:'Cloudy',OVERCAST:'Overcast',OVERCASTDARK:'Dark Overcast',RAIN:'Rain',DRIZZLE:'Drizzle',THUNDER:'Thunder',THUNDERSTORM:'Thunderstorm',FOG:'Fog',MISTY:'Mist',HIGHPRESSURE:'High Pressure',SNOW:'Snow',BLIZZARD:'Blizzard',SNOWLIGHT:'Light Snow',GROUNDBLIZZARD:'Ground Blizzard',HURRICANE:'Hurricane',WHITEOUT:'Whiteout',SANDSTORM:'Sandstorm',SLEET:'Sleet',HAIL:'Hail'}
+  };
+  function configurePlatform(data){
+    const next=data.game??game;if(!Object.hasOwn(weatherByGame,next))throw Error('Unsupported camera game.');
+    game=next;D.setGame(game);
+    dofBlur=game==='gta5'&&data.capabilities?.dofBlur===true;
+    document.title='Arbat16 Camera · '+gameName();document.querySelector('.version').textContent='1.8.0 · '+gameName();
+    $('weather').replaceChildren();
+    for(const [value,label] of Object.entries(weatherByGame[game])){const option=document.createElement('option');option.value=value;option.textContent=label;$('weather').append(option);}
+    $('look-filter').replaceChildren();
+    for(const item of D.filters){const option=document.createElement('option');option.value=item.id;option.textContent=item.label;$('look-filter').append(option);}
+    document.querySelectorAll('[data-dof-blur]').forEach(element=>element.hidden=!dofBlur);
+    $('dof-hint').textContent=dofBlur?'Enable depth of field, then set the distance to your subject.':'Adjust the camera focus distance in metres.';
+    document.querySelector('[data-info-title="Lens"]').dataset.info='A lower field of view zooms in; a higher value shows more of the scene. Drag the slider or type a number. '+(dofBlur?'Roll tilts the camera. Enable Depth of field for blur, set Focus Distance to your subject in metres and adjust Blur Strength.':'Roll tilts the camera and Focus Distance sets the focus in metres.');
+  }
   function toast(message,level='info') { const item=document.createElement('div'); item.className='toast '+(level==='error'?'error':''); item.textContent=String(message); $('toasts').append(item); setTimeout(()=>item.remove(),4200); if(level==='error'&&$('modal').open){let feedback=$('modal-body').querySelector('.dialog-feedback');if(!feedback){feedback=document.createElement('p');feedback.className='dialog-feedback';feedback.setAttribute('role','alert');$('modal-body').append(feedback);}feedback.textContent=String(message);} }
   function send(action,payload={}) {
     if(closing&&action!=='close')return Promise.resolve({ok:false,stale:true,error:'Camera is closing.'});
-    if (!isNui) return Promise.resolve({ok:false,error:'Arbat16 Camera must run inside RedM.'});
+    if (!isNui) return Promise.resolve({ok:false,error:'Arbat16 Camera must run inside FiveM or RedM.'});
     const requestSession = session, body = JSON.stringify({action,...payload});
     const perform = async () => {
       if (requestSession !== session || (!state.open && !['ready','close'].includes(action))) {
@@ -110,7 +127,7 @@
         const response = await fetch(`https://${GetParentResourceName()}/action`,{
           method:'POST',headers:{'Content-Type':'application/json; charset=UTF-8'},body,signal:controller.signal
         });
-        if (!response.ok) throw Error('The RedM camera did not accept the request.');
+        if (!response.ok) throw Error('The '+gameName()+' camera did not accept the request.');
         const result = await response.json();reply=result;
         if (requestSession !== session) return {ok:false,stale:true};
         if(Number.isSafeInteger(result?.revision))acknowledgedServerRevision=Math.max(acknowledgedServerRevision,result.revision);
@@ -140,7 +157,6 @@
     // inspector accepts only scene-schema fields and never fabricates a pose.
     return M.validate({frames:[projected]}).frames[0];
   }
-  for(const item of D.filters){const option=document.createElement('option');option.value=item.id;option.textContent=item.label;$('look-filter').append(option);}
   function hideEditor() {
     closing=false;session++; sceneRevision++; pendingScenes=0; commandQueue=Promise.resolve();acknowledgedServerRevision=-1;
     flightRequest++;pendingFlight=null;
@@ -160,6 +176,8 @@
   }
   function firstSelected(){ return editor.scene.frames.find(f=>selected.has(f.id)); }
   function current(){return firstSelected() || state.camera;}
+  function blurLocked(){return !dofBlur||state.recording||editor.scene.frames.some(frame=>selected.has(frame.id)&&frame.take);}
+  function renderDofAvailability(){for(const id of ['dof-enabled','dof-strength','dof-strength-value'])$(id).disabled=blurLocked();}
   function mutate(fn){try{editor.edit(fn);sync();return true;}catch(e){toast(e.message,'error');render();return false;}}
   async function sync(){
     if(!state.open)return false;
@@ -200,10 +218,11 @@
     $('take-timing').hidden=!has||!f.take;
     $('take-timing').textContent=f.take?`Recorded take: ${f.take.duration.toFixed(2)} s at original speed. Changing duration retimes this clip; ${f.take.samples.length} captured samples stay together.`:'';
     value('fov',f.fov);value('fov-value',f.fov);$('fov-output').textContent=Number(f.fov).toFixed(1)+'°';value('roll',f.rot.y);value('roll-value',f.rot.y);$('roll-output').textContent=Number(f.rot.y).toFixed(1)+'°';
-    value('focus',f.dof.focus);value('duration',f.duration);value('transition',f.transition);value('easing',f.easing);
+    value('focus',f.dof.focus);$('dof-enabled').checked=f.dof.enabled;value('dof-strength',f.dof.strength);value('dof-strength-value',f.dof.strength);$('dof-strength-output').textContent=Number(f.dof.strength).toFixed(2);value('duration',f.duration);value('transition',f.transition);value('easing',f.easing);
     for(const axis of ['x','y','z']){value('pos-'+axis,Number(f.pos[axis]).toFixed(3));$('pos-'+axis).disabled=!has;for(const dir of ['in','out']){value(dir+'-'+axis,f[dir==='in'?'handleIn':'handleOut']?.[axis]??0);$(dir+'-'+axis).disabled=!has;}}
     for(const id of ['duration','transition','easing','auto-handles'])$(id).disabled=!has;
-    for(const id of ['fov','fov-value','roll','roll-value','focus','weather','time-of-day'])$(id).disabled=hasTake;
+    for(const id of ['fov','fov-value','roll','roll-value','focus','dof-enabled','dof-strength','dof-strength-value','weather','time-of-day'])$(id).disabled=hasTake;
+    renderDofAvailability();
     if(hasTake)for(const id of ['transition','easing','auto-handles','pos-x','pos-y','pos-z','in-x','in-y','in-z','out-x','out-y','out-z'])$(id).disabled=true;
     value('weather',f.weather);value('time-of-day',String(f.hour).padStart(2,'0')+':'+String(f.minute).padStart(2,'0'));
   }
@@ -417,6 +436,7 @@
   function selectFrame(id,multi=false){if(!multi)selected.clear();if(multi&&selected.has(id))selected.delete(id);else selected.add(id);if(selected.size)showInspectorTab('advanced');renderInspector();renderTimeline();}
   function renderTime(){value('scrubber-value',Number(state.time.toFixed(3)));const span=Math.max(12,M.duration(editor.scene));$('timecode').textContent=M.timecode(state.time);$('playhead').style.left=M.clamp(state.time/span*100,0,100)+'%';if(document.activeElement!==$('scrubber'))$('scrubber').value=String(state.time);}
   function renderState(){
+    renderDofAvailability();
     $('editor').classList.toggle('flight',state.flight);$('editor').classList.toggle('clean',state.clean);
     $('mode-label').textContent=state.recording?'Recording route':state.playing?'Playback':state.flight?'Moving camera':'Editor';
     $('flight-label').textContent=state.flight?'Return to Editor':'Move Camera';
@@ -502,7 +522,7 @@
     text('h3','Where everything lives',body);text('p','Camera: flight smoothing, composition guides and lens. Look: presets, filters and cinema frames. Saved: reusable camera angles and scene library. Advanced: route points, generated moves, weather and added sway. Stabilization smooths your input; added sway creates deliberate movement.',body);
     text('p','A saved camera is one angle. A scene is a complete route and look. A preset is a reusable look. In the editor, Tab moves between controls; click Move Camera to start flying. Shortcuts pause while you type or use a dialog.',body);
   }
-  function showAttach(){const body=modal('Attach Camera Path');text('p','Move the entire path with a character, horse or wagon. For crosshair selection, first point the centre of the camera at the entity.',body);const label=text('label','',body);label.className='toggle-row';text('span','Follow entity rotation',label);const rotate=document.createElement('input');rotate.type='checkbox';rotate.checked=true;label.append(rotate);const actions=text('div','',body);actions.className='actions';for(const [mode,name] of [['aim','At Crosshair'],['player','Player'],['mount','Horse / Wagon'],['detach','Detach']])button(name,actions,()=>{send('attach',{mode,rotate:rotate.checked});$('modal').close();});}
+  function showAttach(){const body=modal('Attach Camera Path');text('p','Move the entire path with '+(game==='gta5'?'a character or vehicle.':'a character, horse or wagon.')+' For crosshair selection, first point the centre of the camera at the entity.',body);const label=text('label','',body);label.className='toggle-row';text('span','Follow entity rotation',label);const rotate=document.createElement('input');rotate.type='checkbox';rotate.checked=true;label.append(rotate);const actions=text('div','',body);actions.className='actions';for(const [mode,name] of [['aim','At Crosshair'],['player','Player'],game==='gta5'?['vehicle','Vehicle']:['mount','Horse / Wagon'],['detach','Detach']])button(name,actions,()=>{send('attach',{mode,rotate:rotate.checked});$('modal').close();});}
   function exportScene(){const body=modal('Export Scene');text('p','Select and copy the JSON to transfer your scene. If file downloads are available, you can save a .json file.',body);const area=document.createElement('textarea');area.value=JSON.stringify(editor.scene,null,2);area.readOnly=true;area.setAttribute('aria-label','Scene JSON');body.append(area);const actions=text('div','',body);actions.className='actions';button('Select JSON',actions,()=>{area.focus();area.select();});button('Download .json',actions,()=>{const url=URL.createObjectURL(new Blob([area.value],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='arbat16-camera-scene.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},'primary');}
   async function applyImport(raw){
     try{
@@ -573,6 +593,8 @@
   $('generate-move').onclick=showMove;$('workspace-recover').onclick=recoverWorkspace;
   window.addEventListener('resize',()=>{hideInfo();renderFraming();});
   bindNumber('focus',focus=>{send('lens',{dof:{focus}});changeFrames(f=>f.dof.focus=focus);});
+  $('dof-enabled').onchange=()=>{if(blurLocked())return;const enabled=$('dof-enabled').checked;send('lens',{dof:{enabled}});changeFrames(f=>f.dof.enabled=enabled);};
+  bindPair('dof-strength',{digits:2,preview:strength=>{if(!blurLocked())send('lens',{dof:{strength}});},commit:strength=>{if(!blurLocked())changeFrames(f=>f.dof.strength=strength);}});
   function worldChanged(){
     const input=$('time-of-day'),match=/^([01]\d|2[0-3]):([0-5]\d)$/.exec(input.value);
     if(!match){
@@ -666,9 +688,11 @@
     if(!isNui||!d||typeof d!=='object'||Array.isArray(d)||typeof d.type!=='string')return;
     try {
       if(d.type==='close'||d.type==='reset'){hideEditor();return;}
+      if(d.type==='config'&&!state.open){configurePlatform(d);return;}
       if(d.type==='open'){
         // Validate before displaying anything: startup and malformed messages
         // always leave a completely transparent, hidden NUI.
+        configurePlatform(d);
         const scene=M.validate(d.scene),camera=cameraPose(d.camera);
         hideEditor();editor.apply(scene,false);editor.past=[];editor.future=[];
         acknowledgedScene=M.clone(scene);acknowledgedHistory={past:[],future:[]};

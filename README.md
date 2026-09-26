@@ -4,17 +4,19 @@
 
 # ARBAT16 Cinematic Camera
 
-**Direct cinematic shots inside RedM.**<br>Fly the camera, save your angles, lay the shot out on a timeline and play it back while your recorder runs.
+**Direct cinematic shots inside FiveM and RedM.**<br>Fly the camera, save your angles, lay the shot out on a timeline and play it back while your recorder runs.
 
-[![Latest release](https://img.shields.io/github/v/release/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA?label=download&style=for-the-badge&color=111111&labelColor=000000)](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/releases/latest) ![Game: RedM](https://img.shields.io/badge/game-RedM-111111?style=for-the-badge&labelColor=000000) ![Framework: none](https://img.shields.io/badge/framework-none-111111?style=for-the-badge&labelColor=000000) ![Price: free](https://img.shields.io/badge/price-free-111111?style=for-the-badge&labelColor=000000)
+[![Version 1.8.0 source](https://img.shields.io/badge/source-1.8.0-111111?style=for-the-badge&labelColor=000000)](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/archive/refs/heads/main.zip) ![Games: FiveM and RedM](https://img.shields.io/badge/games-FiveM%20%2B%20RedM-111111?style=for-the-badge&labelColor=000000) ![Framework: none](https://img.shields.io/badge/framework-none-111111?style=for-the-badge&labelColor=000000) ![Price: free](https://img.shields.io/badge/price-free-111111?style=for-the-badge&labelColor=000000)
 
-[**Download the ZIP**](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/releases/latest) · [Website](https://store.arbat16.com/cinematic-camera) · [User guide](resource/arbat16_camera/README.md) · [Changelog](resource/arbat16_camera/CHANGELOG.md) · [Report a problem](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/issues) · [Discord](https://dscrd.in/arbat16)
+[**Download source ZIP**](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/archive/refs/heads/main.zip) · [Website](https://store.arbat16.com/cinematic-camera) · [User guide](resource/arbat16_camera/README.md) · [Changelog](resource/arbat16_camera/CHANGELOG.md) · [Report a problem](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/issues) · [Discord](https://dscrd.in/arbat16)
 
 </div>
 
 <br>
 
-A standalone Lua director for RedM: free flight, saved camera angles, a keyframe timeline and route recording, with film looks and composition guides on top. The English interface stays see-through over the game, so you always frame the real picture.
+A standalone Lua director for FiveM and RedM: free flight, saved camera angles, a keyframe timeline and route recording, with film looks and composition guides on top. The English interface stays see-through over the game, so you always frame the real picture.
+
+**Version 1.8.0 uses one resource for both games.** It detects GTA V or RDR3 automatically and selects the matching camera natives, weather, filters and attachment controls. No game setting or separate download is required.
 
 | Command | Resource | Permission | Framework | Storage |
 | :-- | :-- | :-- | :-- | :-- |
@@ -24,7 +26,9 @@ A standalone Lua director for RedM: free flight, saved camera angles, a keyframe
 
 <a href="https://store.arbat16.com/cinematic-camera#reel"><img src="docs/images/shot-wagon.jpg" alt="A horse cart crossing a sunlit Saint Denis street, framed at 2.39:1" width="100%"></a>
 
-<sub>A Saint Denis street flown and framed at 2.39:1 with the camera. Watch the clip on the <a href="https://store.arbat16.com/cinematic-camera#reel">website</a>.</sub>
+<sub>RedM footage: a Saint Denis street flown and framed at 2.39:1 with the camera. Watch the clip on the <a href="https://store.arbat16.com/cinematic-camera#reel">website</a>.</sub>
+
+All screenshots and the banner on this page show **RedM**. FiveM shares the editor layout and uses its own game effects and environments.
 
 ## Features
 
@@ -50,7 +54,7 @@ A standalone Lua director for RedM: free flight, saved camera angles, a keyframe
     <td width="50%" valign="top">
       <img src="docs/images/look-western-scope.jpg" alt="Western Scope look with a 2.39:1 CinemaScope frame" width="100%">
       <h3>Six looks, seven frames</h3>
-      Ready-made looks, the native photo mode Black &amp; White and frames from native to 2.39:1 CinemaScope. Tune the filter strength and save up to 40 presets of your own.
+      Six ready-made presets, game-specific native filters including Black &amp; White, and frames from native to 2.39:1 CinemaScope. Tune the filter strength and save up to 40 presets of your own.
     </td>
   </tr>
   <tr>
@@ -68,7 +72,7 @@ A standalone Lua director for RedM: free flight, saved camera angles, a keyframe
 </table>
 
 <details>
-<summary><b>All looks side by side</b></summary>
+<summary><b>RedM looks side by side</b></summary>
 <br>
 
 <table>
@@ -95,7 +99,8 @@ The sixth look, **Natural**, keeps the game picture as it is.
 - **Camera moves in one click:** dolly, truck, crane, pan and orbit land on the timeline ready to edit, with an optional return to the start.
 - **Handheld and sway:** motion with amplitude, frequency and roll on top of a clean saved path.
 - **Time and weather per keyframe:** local environment for every point; time blends across midnight the short way.
-- **Follow a subject:** attach the route to the player, their mount or vehicle, or a character under the crosshair.
+- **Follow a subject:** attach the route to the player, their current vehicle in FiveM, their horse or vehicle in RedM, or an entity under the crosshair.
+- **Focus controls:** FiveM adds a depth-of-field switch and adjustable blur strength; RedM keeps its focus-distance control. The editor shows the controls supported by the current game.
 - **Scene library:** named scenes on the server with JSON import and export.
 - **Numbers everywhere:** every slider has an exact numeric field, plus click-to-read help and a full in-game guide on <kbd>F1</kbd>.
 - **Built for big screens:** a monochrome, see-through interface that scales up to 4K and ultrawide and never tints the game.
@@ -105,8 +110,8 @@ The sixth look, **Natural**, keeps the game picture as it is.
 
 ## Install
 
-1. Download `arbat16_camera-vX.Y.Z.zip` from the [latest release](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/releases/latest). A `.sha256` checksum sits next to it.
-2. Extract the `arbat16_camera` folder into your RedM server's `resources` directory. Keep the folder name.
+1. Download the [main branch source ZIP](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/archive/refs/heads/main.zip) for the universal version 1.8.0. A GitHub Release for 1.8.0 has not been published yet.
+2. Open `ARBAT16-REDM_CINEMATIC_CAMERA-main/resource/` inside the archive and copy its **`arbat16_camera`** folder into your FiveM or RedM server's `resources` directory. The manifest should end up at `resources/arbat16_camera/fxmanifest.lua`; keep the folder name.
 3. Add these lines to `server.cfg`:
 
    ```cfg
@@ -116,7 +121,7 @@ The sixth look, **Natural**, keeps the game picture as it is.
 
 4. Restart the server, or run `refresh` and `ensure arbat16_camera` in the console, then type `/ar16_cam` in chat.
 
-No framework, database, npm build or external font download is needed.
+The same folder runs in both games and detects the platform automatically. No framework, database, npm build or external font download is needed. The source archive also contains development files; only the nested `arbat16_camera` folder is installed on the server.
 
 > [!TIP]
 > To give the camera to one player instead of the whole admin group, grant the ACE to their license:
@@ -175,7 +180,7 @@ Shortcuts pause while you type in a field. The full reference lives in the [user
 | `WeatherEnabled` | `true` | Apply local time and weather |
 | `MaxDistance` | `2000.0` | Distance limit from the player, meters |
 
-Scenes and workspaces are stored in server resource KVP under each player's license. Export JSON or back up the KVP database to keep them.
+Scenes and workspaces are stored in server resource KVP under each player's license. Export JSON or back up the KVP database to keep them. Existing RedM workspaces remain compatible. Scene exports are intended for the same game: the resource does not convert map coordinates or weather between GTA V and RDR3.
 
 </details>
 
@@ -192,7 +197,7 @@ Scenes and workspaces are stored in server resource KVP under each player's lice
 
 If flight or playback does not move the camera, run `ar16_camdebug` while the camera is open and paste its output into an [issue](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/issues). With `Diagnostics=true` the server also writes `camera-diagnostics.jsonl` inside the resource, capped at 256 KiB, with no license, account name or hardware identifiers.
 
-Use one camera editor at a time. `simple_weather` is integrated; other weather controllers may need an integration.
+Use one camera editor at a time. RedM retains `simple_weather` integration. FiveM uses local weather and clock overrides; a continuously syncing weather controller may overwrite them and needs to be coordinated for filming.
 
 </details>
 
@@ -224,7 +229,9 @@ python tools/build_release.py
 
 The build produces one installable resource folder with its license documents and a SHA-256 checksum. Logs, tests, build tools, dependency folders and this `docs/` folder are left out of the ZIP.
 
-Offline tests cover the logic and the interface. They do not replace an in-game smoke test on your RedM server: native effects and compatibility with other camera or weather resources depend on that environment.
+Native checks use four reference fixtures fetched by `tools/fetch_native_references.py` at pinned commits and verified by hash. The first run needs network access; subsequent runs can use the cached fixtures offline.
+
+Tests cover the logic and interface for both games. Version 1.8.0 still needs an in-game smoke test in **FiveM and RedM**: native effects and compatibility with other camera or weather resources depend on that environment. The RedM screenshots above do not verify the universal build in either game.
 
 [Changes](resource/arbat16_camera/CHANGELOG.md) · [Tebex product text](resource/arbat16_camera/docs/TEBEX-DESCRIPTION.md) · [Publishing notes](resource/arbat16_camera/docs/PUBLISHING.md)
 

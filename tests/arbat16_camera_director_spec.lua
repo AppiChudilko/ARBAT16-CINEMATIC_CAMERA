@@ -1,3 +1,5 @@
+local previousGetGameName = GetGameName
+GetGameName = function() return 'fivem' end
 local C = dofile('resource/arbat16_camera/shared/core.lua')
 local D = dofile('resource/arbat16_camera/shared/director.lua')
 local checks = 0
@@ -23,8 +25,34 @@ for _, filter in ipairs(D.filters) do equal(assert(D.validate({look={filter=filt
 local monochrome
 for _, filter in ipairs(D.filters) do if filter.id=='monochrome' then monochrome=filter end end
 equal(monochrome.label,'Black & White')
-equal(monochrome.postfx,'PhotoMode_FilterModern07','verified native Noir effect')
-equal(monochrome.modifier,nil,'photo effect is never passed as a timecycle name')
+equal(monochrome.modifier,'blackNwhite','verified GTA monochrome timecycle')
+equal(monochrome.postfx,nil,'GTA filters do not require photo-mode postfx')
+local modifiers={monochrome='blackNwhite',player_camera='phone_cam',cinematic='cinema',
+    flat='hud_def_desat_Neutral',dusk='hud_def_desat_Trevor',frontier='hud_def_desatcrunch',dream='hud_def_focus'}
+for _, filter in ipairs(D.filters) do
+    equal(filter.modifier,modifiers[filter.id],'GTA catalog mapping')
+    equal(filter.postfx,nil,'catalog has no RDR photo effect calls')
+end
+equal(D.presets[2].name,'Cinema Scope');equal(D.presets[3].name,'Urban')
+equal(camera().weather,'CLEAR','default GTA camera weather')
+local omittedWeather=camera();omittedWeather.weather=nil
+equal(assert(C.validateScene({frames={omittedWeather}})).frames[1].weather,'CLEAR','omitted weather defaults to CLEAR')
+for weather in pairs(C.weatherTypes) do
+    local frame=camera();frame.weather=weather:lower()
+    equal(assert(C.validateScene({frames={frame}})).frames[1].weather,weather,'GTA weather normalized')
+end
+for _, weather in ipairs({'SUNNY','OVERCASTDARK','DRIZZLE','MISTY','SANDSTORM','BOGUS'}) do
+    local frame=camera();frame.weather=weather
+    rejects(C.validateScene,{frames={frame}},'unsupported imported weather rejected before game native')
+end
+local recorded=camera();recorded.weather=nil
+recorded.take={duration=1,samples={{0,1,2,3,0,0,0,50,10,12,0,'rain'},
+    {1,2,2,3,0,0,0,50,10,12,0,'foggy'}}}
+local recordedScene=assert(C.validateScene({frames={recorded}}))
+equal(recordedScene.frames[1].weather,'RAIN','recorded first sample determines clip weather')
+equal(recordedScene.frames[1].take.samples[2][12],'FOGGY','recorded sample weather normalized')
+recorded.take.samples[2][12]='SUNNY'
+rejects(C.validateScene,{frames={recorded}},'unsupported recorded weather rejected')
 for _, ratio in ipairs(D.ratios) do equal(assert(D.validate({framing={ratio=ratio}})).framing.ratio,ratio) end
 for _, preset in ipairs(D.presets) do assert(D.validate(preset.director)) end
 for _, mutate in ipairs({
@@ -164,19 +192,17 @@ equal(base.pos.x,1,'generator must not mutate original')
 
 -- A filter is a single shared game slot: updates are idempotent and cleanup
 -- cannot clear another resource's replacement or an untouched original effect.
-local calls,index,ids={},41,{PlayerCamera=10,FlatProfile=11}
-local effects,strengths={},{}
+local calls,index,ids={},41,{phone_cam=10,hud_def_desat_Neutral=11,blackNwhite=12,
+    cinema=13,hud_def_desat_Trevor=14,hud_def_desatcrunch=15,hud_def_focus=16}
+local strengths={}
 local failedNative
 local function mockNative(native,...)
     local values={...};calls[#calls+1]={native,table.unpack(values)}
     if native==failedNative then error('mock unavailable native: '..native) end
     if native=='GET_TIMECYCLE_MODIFIER_INDEX' then return index end
-    if native=='SET_TIMECYCLE_MODIFIER' then index=ids[values[1]] or 12 end
+    if native=='SET_TIMECYCLE_MODIFIER' then index=assert(ids[values[1]],'unknown GTA modifier') end
     if native=='CLEAR_TIMECYCLE_MODIFIER' then index=-1 end
-    if native=='ANIMPOSTFX_IS_RUNNING' then return effects[values[1]]==true end
-    if native=='ANIMPOSTFX_PLAY' then effects[values[1]]=true end
-    if native=='ANIMPOSTFX_STOP' then effects[values[1]]=false end
-    if native=='_ANIMPOSTFX_SET_STRENGTH' then strengths[values[1]]=values[2] end
+    if native=='SET_TIMECYCLE_MODIFIER_STRENGTH' then strengths[index]=values[1] end
 end
 FC.Natives={call=mockNative}
 local R=dofile('resource/arbat16_camera/client/director.lua')
@@ -188,29 +214,31 @@ index=99;R.cleanup();equal(index,99,'cleanup must preserve another resource repl
 R.apply(look);equal(index,10);R.cleanup();equal(index,-1,'cleanup clears own active effect')
 R.apply(look);look.look.strength=0;R.apply(look);equal(index,-1,'zero strength clears own effect')
 local mono=D.defaults();mono.look={filter='monochrome',strength=1}
-local effect=monochrome.postfx
-effects.UnrelatedGameplayEffect=true
-index=41;equal(R.apply(mono),true);equal(effects[effect],true,'monochrome starts native photo effect')
-equal(strengths[effect],1);equal(index,41,'photo effect leaves unowned timecycle intact')
+index=41;equal(R.apply(mono),true);equal(index,12,'monochrome uses GTA blackNwhite timecycle')
+equal(strengths[12],1,'full monochrome strength reaches native')
 before=#calls;R.apply(mono);equal(#calls,before,'unchanged monochrome is not restarted every frame')
-mono.look.strength=.25;R.apply(mono);equal(calls[#calls][1],'_ANIMPOSTFX_SET_STRENGTH');equal(strengths[effect],.25)
-look.look.strength=.6;R.apply(look);equal(effects[effect],false,'switching to timecycle stops owned photo effect');equal(index,10)
-R.apply(mono);equal(index,-1,'switching to photo effect clears owned timecycle');equal(effects[effect],true)
-mono.look.strength=0;R.apply(mono);equal(effects[effect],false,'zero strength stops monochrome')
-mono.look.strength=1;R.apply(mono);R.cleanup();equal(effects[effect],false,'cleanup stops owned monochrome')
-equal(effects.UnrelatedGameplayEffect,true,'unrelated gameplay effects survive cleanup')
-effects[effect]=true;strengths[effect]=.42;before=#calls
-R.apply(mono);mono.look.strength=.5;R.apply(mono);R.cleanup()
-equal(effects[effect],true,'cleanup cannot stop pre-existing monochrome effect')
-equal(strengths[effect],.42,'pre-existing effect strength remains owned by its caller')
-for i=before+1,#calls do equal(calls[i][1]~='ANIMPOSTFX_STOP' and calls[i][1]~='_ANIMPOSTFX_SET_STRENGTH',true,'external effect is not mutated') end
-effects[effect]=false;failedNative='_ANIMPOSTFX_SET_STRENGTH'
-equal(R.apply(mono),false,'strength native failure is isolated');equal(effects[effect],true)
-failedNative=nil;equal(R.cleanup(),true);equal(effects[effect],false,'cleanup still owns effect after strength failure')
-failedNative='ANIMPOSTFX_PLAY';equal(R.apply(mono),false,'play native failure is isolated')
+mono.look.strength=.25;R.apply(mono);equal(calls[#calls][1],'SET_TIMECYCLE_MODIFIER_STRENGTH');equal(strengths[12],.25)
+look.look.strength=.6;R.apply(look);equal(index,10,'switching from monochrome replaces owned slot')
+R.apply(mono);equal(index,12,'switching back reuses timecycle path')
+mono.look.strength=0;R.apply(mono);equal(index,-1,'zero strength clears monochrome')
+mono.look.strength=1;R.apply(mono);R.cleanup();equal(index,-1,'cleanup clears owned monochrome')
+R.apply(mono);index=99;before=#calls;R.apply(mono)
+equal(#calls,before,'per-frame apply does not steal another resource replacement')
+R.cleanup();equal(index,99,'cleanup preserves another resource timecycle')
+failedNative='SET_TIMECYCLE_MODIFIER_STRENGTH'
+equal(R.apply(mono),false,'strength native failure is isolated');equal(index,12)
+failedNative=nil;equal(R.cleanup(),true);equal(index,-1,'cleanup still owns slot after strength failure')
+failedNative='SET_TIMECYCLE_MODIFIER';equal(R.apply(mono),false,'modifier native failure is isolated')
 failedNative=nil;equal(R.cleanup(),true,'failed start remains safe to clean')
-R.apply(mono);R.apply(D.defaults());equal(effects[effect],false,'Original clears only owned monochrome')
-for _,call in ipairs(calls) do equal(call[1]~='ANIMPOSTFX_STOP_ALL',true,'no global postfx cleanup') end
+R.apply(mono);R.apply(D.defaults());equal(index,-1,'Original clears owned monochrome')
+for _, filter in ipairs(D.filters) do
+    if filter.modifier then
+        local choice=D.defaults();choice.look.filter=filter.id
+        equal(R.apply(choice),true);equal(index,ids[filter.modifier],'every selected GTA filter reaches its timecycle')
+    end
+end
+R.cleanup()
+for _,call in ipairs(calls) do equal(not call[1]:find('ANIMPOSTFX',1,true),true,'no postfx path exists in FiveM director') end
 FC.Natives.call=function()error('mock unavailable native')end
 look.look.strength=.5;equal(R.apply(look),false,'native failure must not terminate camera loop')
 equal(R.apply(look),true,'unchanged failure must not spam retries')
@@ -219,8 +247,63 @@ dofile('resource/arbat16_camera/client/natives.lua')
 local invoked
 Citizen={InvokeNative=function(hash,...)invoked={hash=hash,args=table.pack(...)};return 1 end,
     ReturnResultAnyway=function()return 'return'end,ResultAsInteger=function()return 'integer'end}
-FC.Natives.call('_ANIMPOSTFX_SET_STRENGTH',effect,1)
-equal(invoked.hash,0xCAB4DD2D5B2B7246);equal(invoked.args[1],effect);equal(math.type(invoked.args[2]),'float')
-equal(FC.Natives.call('ANIMPOSTFX_IS_RUNNING',effect),true,'postfx running native uses normalized BOOL')
-equal(pcall(FC.Natives.call,'ANIMPOSTFX_PLAY',effect,0),false,'RDR3 postfx play accepts only the effect name')
+FC.Natives.call('SET_TIMECYCLE_MODIFIER_STRENGTH',1)
+equal(invoked.hash,0x82E7FFCD5B2326B3);equal(math.type(invoked.args[1]),'float')
+FC.Natives.call('SET_TIMECYCLE_MODIFIER','blackNwhite')
+equal(invoked.hash,0x2C933ABF17A1DF41);equal(invoked.args[1],'blackNwhite')
+equal(FC.Natives.call('GET_TIMECYCLE_MODIFIER_INDEX'),1,'GTA modifier index uses integer native return')
+equal(invoked.hash,0xFDF3D97C674AFB66)
+FC.Natives.call('CLEAR_TIMECYCLE_MODIFIER');equal(invoked.hash,0x0F07E7745A236711)
+equal(pcall(FC.Natives.call,'SET_TIMECYCLE_MODIFIER','blackNwhite',0),false,'GTA modifier native accepts one name')
+
+-- The same files also run in a RedM client and in either server's shared runtime.
+local function platform(framework, serverGame)
+    local env={FC={},GetGameName=framework and function() return framework end or false,
+        GetConvar=function(key,fallback) equal(key,'gamename');return serverGame or fallback end}
+    setmetatable(env,{__index=_G})
+    local core=assert(loadfile('resource/arbat16_camera/shared/core.lua','t',env))()
+    local director=assert(loadfile('resource/arbat16_camera/shared/director.lua','t',env))()
+    return core,director,env
+end
+local rdr,redDirector,redEnv=platform('redm')
+equal(rdr.game,'rdr3');equal(rdr.defaultFrame().weather,'SUNNY')
+equal(redDirector.presets[2].name,'Western Scope');equal(redDirector.presets[3].name,'Frontier')
+local redMono
+for _,filter in ipairs(redDirector.filters) do if filter.id=='monochrome' then redMono=filter end end
+equal(redMono.postfx,'PhotoMode_FilterModern07');equal(redMono.modifier,nil)
+for weatherType in pairs(rdr.weatherTypes) do
+    local f=rdr.defaultFrame();f.weather=weatherType:lower()
+    equal(assert(rdr.validateScene({frames={f}})).frames[1].weather,weatherType)
+end
+local rdrBad=rdr.defaultFrame();rdrBad.weather='CLEAR'
+rejects(rdr.validateScene,{frames={rdrBad}},'GTA-only weather cannot enter RedM frame')
+local effects,strengths={},{}
+redEnv.FC.Natives={call=function(native,...)
+    local values={...}
+    if native=='ANIMPOSTFX_IS_RUNNING' then return effects[values[1]]==true end
+    if native=='ANIMPOSTFX_PLAY' then effects[values[1]]=true end
+    if native=='ANIMPOSTFX_STOP' then effects[values[1]]=false end
+    if native=='_ANIMPOSTFX_SET_STRENGTH' then strengths[values[1]]=values[2] end
+    if native=='GET_TIMECYCLE_MODIFIER_INDEX' then return 41 end
+end}
+local redRuntime=assert(loadfile('resource/arbat16_camera/client/director.lua','t',redEnv))()
+local redLook=redDirector.defaults();redLook.look={filter='monochrome',strength=1}
+equal(redRuntime.apply(redLook),true);equal(effects[redMono.postfx],true);equal(strengths[redMono.postfx],1)
+equal(redRuntime.cleanup(),true);equal(effects[redMono.postfx],false,'RedM owns and stops its Noir effect')
+effects[redMono.postfx]=true;strengths[redMono.postfx]=0.42
+redRuntime.apply(redLook);redRuntime.cleanup()
+equal(effects[redMono.postfx],true,'pre-existing RedM Noir remains running')
+equal(strengths[redMono.postfx],0.42,'pre-existing RedM Noir remains unmodified')
+assert(loadfile('resource/arbat16_camera/client/natives.lua','t',redEnv))()
+redEnv.Citizen={InvokeNative=function(hash,...)invoked={hash=hash,args=table.pack(...)};return 1 end,
+    ReturnResultAnyway=function()return 'return'end,ResultAsInteger=function()return 'integer'end}
+redEnv.FC.Natives.call('_ANIMPOSTFX_SET_STRENGTH',redMono.postfx,1)
+equal(invoked.hash,0xCAB4DD2D5B2B7246);equal(invoked.args[1],redMono.postfx);equal(math.type(invoked.args[2]),'float')
+equal(redEnv.FC.Natives.call('ANIMPOSTFX_IS_RUNNING',redMono.postfx),true,'RedM BOOL contract retained')
+equal(pcall(redEnv.FC.Natives.call,'ANIMPOSTFX_PLAY',redMono.postfx,0),false,'RedM play retains one-name ABI')
+equal(platform('fxserver','gta5').game,'gta5');equal(platform('fxserver','rdr3').game,'rdr3')
+equal(platform('fxserver').game,'gta5','server gamename default is GTA V')
+equal(platform(false).game,'rdr3','offline tests preserve legacy RedM default')
+equal(pcall(platform,'libertym'),false,'unsupported game must not select another game native table')
+GetGameName = previousGetGameName
 print(('Director: %d checks passed'):format(checks))

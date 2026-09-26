@@ -1,8 +1,8 @@
 {
-  "name": "arbat16-redm-cinematic-camera",
-  "version": "1.7.1",
+  "name": "arbat16-cinematic-camera",
+  "version": "1.8.0",
   "private": true,
-  "description": "Development checks for ARBAT16 Cinematic Camera; no Node runtime is required by RedM",
+  "description": "Development checks for the unified FiveM and RedM ARBAT16 Cinematic Camera",
   "license": "SEE LICENSE IN LICENSE.txt",
   "engines": { "node": ">=24" },
   "scripts": { "test:nui": "node --test tests/arbat16_camera_model.test.cjs tests/arbat16_camera_nui.test.cjs" },

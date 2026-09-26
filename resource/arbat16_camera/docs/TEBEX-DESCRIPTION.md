@@ -1,8 +1,8 @@
-# ARBAT16 Cinematic Camera for RedM
+# ARBAT16 Cinematic Camera for FiveM and RedM
 
-Build camera shots and editable routes inside RedM with a standalone Lua director resource. Fly the camera, save viewpoints, record movement and apply a cinematic look from an English interface that keeps the game visible behind it.
+Build camera shots and editable routes inside FiveM or RedM with a standalone Lua director resource. Fly the camera, save viewpoints, record movement and apply a cinematic look from an English interface that keeps the game visible behind it.
 
-- **Version:** 1.7.1
+- **Version:** 1.8.0
 - **Resource folder:** `arbat16_camera`
 - **Open command:** `/ar16_cam`
 
@@ -31,17 +31,17 @@ The interface scales for compact, ultrawide and 4K displays. Keyboard shortcuts,
 
 ## Requirements and limits
 
-A running RedM server and client are required. The resource is standalone and uses server ACE permissions; no roleplay framework or database resource is required. Install the `arbat16_camera` folder, grant `arbat16_camera.use`, and add `ensure arbat16_camera` to the server configuration. Full steps are included in the README.
+A running FiveM or RedM server and matching client are required. The same resource detects the game automatically; no manual platform switch is needed. The resource is standalone and uses server ACE permissions; no roleplay framework or database resource is required. Install the `arbat16_camera` folder, grant `arbat16_camera.use`, and add `ensure arbat16_camera` to the server configuration. Full steps are included in the README.
 
 **Record Route records camera movement, not a video file.** Capture the final picture and audio with an external recording tool. Actual sampling depends on game frame rate. Framing masks do not change recording resolution.
 
 A scene supports up to 200 points/clips and 60 minutes. One recorded take supports up to five minutes; the scene has a bounded recorded-sample limit. The default scene library holds 30 named scenes. Large saves take longer to transfer: wait for the workspace save indicator before disconnecting. A sudden disconnect can lose changes that have not reached the server.
 
-Filter and focus appearance depend on game settings and other camera, timecycle or weather resources. Focus distance is supported; full cinematic near/far/strength depth-of-field blur controls are not implemented.
+Filter and focus appearance depend on game settings and other camera, timecycle or weather resources. FiveM supports optional shallow depth of field with focus and strength; RedM exposes focus distance. Unsupported controls are hidden automatically.
 
 ## Included and licensed
 
-The package includes the Lua resource, local NUI assets, configuration, documentation and license notices. [Source is available on GitHub](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA).
+The package includes the Lua resource, local NUI assets, configuration, documentation and license notices. The archive contains editable source. The project originated with [ARBAT16 RedM Camera](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA).
 
 Use and modification, including commercial-server use and monetized videos, are permitted under the included ARBAT16 source-available license. Free redistribution must retain the license and notices. Selling, reselling, renting or charging for copies of the script or derivatives, including paid bundles, requires separate written permission from ARBAT16. Bundled Inter uses SIL OFL 1.1.
 

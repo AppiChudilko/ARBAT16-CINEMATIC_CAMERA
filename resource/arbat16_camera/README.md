@@ -1,10 +1,10 @@
-# Arbat16 Camera 1.7.1 — RedM director resource
+# Arbat16 Camera 1.8.0 — FiveM and RedM director resource
 
-Standalone Lua cinematic camera with an English NUI editor. The game remains visible behind the transparent interface. The NUI starts hidden and opens only through the RedM client. There is no website, sample world, browser simulator, browser scene storage, external asset service or build step in this resource.
+Standalone Lua cinematic camera with an English NUI editor. The game remains visible behind the transparent interface. The NUI starts hidden and opens only through the game client. There is no website, sample world, browser simulator, browser scene storage, external asset service or build step in this resource.
 
 ## Install and update
 
-Download the `arbat16_camera-v1.7.1.zip` asset from the [GitHub release](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/releases/tag/v1.7.1). Extract its **arbat16_camera** folder into your RedM server's `resources` directory. Keep the resource folder name unchanged. No framework, database, npm build or external font download is required for installation.
+Extract **arbat16_camera** from `arbat16_camera-v1.8.0.zip` into your FiveM or RedM server's `resources` directory. **The same ZIP supports both games.** Game detection is automatic on the client and server; no platform setting is required. Keep the resource folder name unchanged. No framework, database, npm build or external font download is required for installation.
 
 `server.cfg` should contain:
 
@@ -30,7 +30,7 @@ FXServer namespaces scene KVP by resource name. Any scenes saved under `frontier
 ## First shot
 
 1. Run `/ar16_cam`. In **Camera**, choose a stabilization level, then use **Tab** or **Move Camera** to enter flight mode.
-2. Move with **W A S D**, go down/up with **Q / E**, and turn with the mouse. Flight uses native RedM input and releases the editor cursor. **Shift** accelerates; **Alt** or **Ctrl** slows movement. On older clients without native raw-key input, the NUI fallback uses mouse capture or right-button drag.
+2. Move with **W A S D**, go down/up with **Q / E**, and turn with the mouse. Flight uses native game input and releases the editor cursor. **Shift** accelerates; **Alt** or **Ctrl** slows movement. On older clients without native raw-key input, the NUI fallback uses mouse capture or right-button drag.
 3. Press **F / Add Point** to remember a point on the route, move and add another. Alternatively, press **R / Record Route**, fly the shot and press **R** again to create one recorded clip.
 4. Return to editing with **Tab**. Select a keyframe to edit it; double-click it to move the camera to that pose.
 5. Press **Space / Play Route** to play the route. **H** hides the controls and keeps the camera visible.
@@ -100,15 +100,15 @@ If the server cannot read the existing workspace, automatic saving is disabled t
 
 Every slider has a paired numeric field, including FOV, roll, flight speed, filter strength, framing opacity, motion controls and timeline seconds. Playback speed accepts exact values from 0.1 to 8. Empty or invalid fields do not silently write zero.
 
-**Presets** includes Natural, Western Scope, Frontier, Quiet Portrait, Handheld and Dream Sequence. Apply one as a starting point, adjust the lens, filter, framing and motion, then save your own named preset (up to 40). Applying a preset pauses playback so its live lens settings remain visible. Timeline keyframes retain their authored lenses; capture or update a keyframe to use the new lens there.
+**Presets** includes Natural, Cinema Scope / Western Scope, Urban / Frontier, Quiet Portrait, Handheld and Dream Sequence. Apply one as a starting point, adjust the lens, filter, framing and motion, then save your own named preset (up to 40). Applying a preset pauses playback so its live lens settings remain visible. Timeline keyframes retain their authored lenses; capture or update a keyframe to use the new lens there.
 
-**Look & Framing** offers six RedM timecycle filters, **Black & White** using the native Photo Mode Noir effect, and Original. Filter strength is adjustable. For a fully monochrome image, set Black & White strength to 100%. Formats are Native, 2.39:1, 2.35:1, 1.85:1, 16:9, 4:3 and square; the masks adapt to both wide and tall screens. Their opacity is adjustable. These are viewport masks, not changes to capture resolution. The unobscured game area remains transparent in NUI. The game has one timecycle modifier slot; a different resource replacing that effect can take control. Black & White uses a separate native post-effect. Cleanup releases effects started or owned by this resource. Filters apply to the entire scene; different filters cannot yet be automated per timeline point.
+**Look & Framing** offers eight choices including Original and Black & White. FiveM uses GTA V timecycles (including `blackNwhite`); RedM uses its own timecycles and the Photo Mode Noir effect. The catalog switches automatically. Filter strength is adjustable; choose 100% for a fully monochrome look. Formats are Native, 2.39:1, 2.35:1, 1.85:1, 16:9, 4:3 and square, with adjustable mask opacity. These masks do not change capture resolution. Other resources can take ownership of the game's timecycle slot; cleanup only releases effects owned by this resource. Filters apply to the whole scene and cannot yet be automated per timeline point.
 
 **Camera Motion** offers Sway and Handheld movement with amplitude, frequency and roll controls. This is an additive effect: the saved base viewpoint and path are not changed. Set motion to None to return to the exact base camera.
 
 **Create Camera Move** appends an editable Dolly, Truck, Crane, Pan or Orbit starting at the current camera. Set travel distance or angle and total duration, optionally Return to start, then use Play. Enable the existing Loop control to repeat the route. A return move's duration includes both directions. Generated frames can be moved, retimed, saved and followed by manual keyframes or REC. Orbit uses a pivot in front of the current camera; distance is the orbit radius.
 
-Modifier names and signatures are checked against [RDR3 NativeDB](https://github.com/alloc8or/rdr3-nativedb-data) and [RDR3 timecycles](https://github.com/femga/rdr3_discoveries/blob/master/graphics/timecycles/timecycles.lua) and the [photo-mode effect catalog](https://github.com/femga/rdr3_discoveries/blob/master/graphics/animpostfx/animpostfx.lua). Their exact appearance depends on RedM, weather and graphics settings; live visual verification is still required.
+Game-specific calls are checked against [GTA V NativeDB](https://github.com/alloc8or/gta5-nativedb-data), [RDR3 NativeDB](https://github.com/alloc8or/rdr3-nativedb-data) and [Cfx.re native declarations](https://github.com/citizenfx/fivem/tree/master/ext/native-decls). Filter names come from [GTA V timecycles](https://github.com/DurtyFree/gta-v-data-dumps/blob/master/timecycleModifiers.json) and [RDR3 timecycles](https://github.com/femga/rdr3_discoveries/blob/master/graphics/timecycles/timecycles.lua). Their appearance depends on the game, weather and graphics settings.
 
 ## Screen sizes
 
@@ -118,7 +118,7 @@ Inter's license is included in `web/fonts/OFL-Inter.txt`. The font is served by 
 
 The transparent interface scales automatically with viewport height, bounded by width. At 4K its controls and text are twice the 1080p size; ultrawide displays keep the height-based scale. Compact windows use wrapped controls and a scrollable properties panel. The **Toggle properties** button next to **Clean View** hides the inspector independently of the timeline. Resizing needs no restart and does not change camera projection coordinates.
 
-Layout checks covered 360x640, 640x480, 800x600, 1280x720, 1920x1080, 2560x1440, 3440x1440 and 3840x2160. These are NUI layout checks, not live RedM rendering tests.
+Layout checks covered 360x640, 640x480, 800x600, 1280x720, 1920x1080, 2560x1440, 3440x1440 and 3840x2160. The responsive layout is retained from the RedM editor; live visual checks in both games are still required for this universal release.
 
 ## Camera and timeline
 
@@ -129,7 +129,7 @@ Layout checks covered 360x640, 640x480, 800x600, 1280x720, 1920x1080, 2560x1440,
 - Frame stepping, repeat and timeline speed from 0.1× to 8×.
 - Timestamped route recording with **REC**, targeting 30 samples per second and storing each recording as one clip.
 - Local weather and time per keyframe. Time follows the shortest path through midnight; weather switches between presets.
-- Attach the route to the player, current mount/vehicle or character/horse/wagon under the camera center. Optional rotation follows target orientation. Detaching bakes the current transform into the route.
+- Attach the route to the player, the current vehicle in FiveM, or the horse/vehicle in RedM; the aimed-target option supports an entity under the camera center. Optional rotation follows target orientation. Detaching bakes the current transform into the route.
 - Server scene library, JSON import/export, HUD hiding, six composition guides and optional 2.39:1 letterbox.
 
 A manual point's duration covers movement to the next point; the last duration is a stationary hold. A zero-duration non-final point must use a cut. Saved-camera shots hold their angle for their duration, then cut. Format limits: 200 points/clips, 600 seconds per clip and 60 minutes per scene.
@@ -161,21 +161,21 @@ Edit `config.lua`:
 | WeatherEnabled | `true` | Apply local environment |
 | MaxDistance | `2000.0` | Distance from player, meters |
 
-Libraries and director workspaces use separate server resource KVP keys for each stable player license. Workspaces are limited to 8 MiB. Names are display labels, never paths. Scene names allow up to 64 UTF-8 bytes, excluding slashes and control characters. Saving an existing name replaces that saved scene. Existing user names are preserved. Lowering configured limits does not prevent reading or deleting older valid scenes. Version 1.5 reads old scenes; older releases do not understand recorded takes.
+Libraries and director workspaces use separate server resource KVP keys for each stable player license. Workspaces are limited to 8 MiB. Names are display labels, never paths. Scene names allow up to 64 UTF-8 bytes, excluding slashes and control characters. Saving an existing name replaces that saved scene. Existing user names are preserved. Lowering configured limits does not prevent reading or deleting older valid scenes. Existing RedM workspaces remain compatible. FiveM and RedM use different worlds and weather catalogs: a scene export is intended for the same game, not automatic map conversion.
 
 Large save/restore messages use [Cfx latent events](https://docs.fivem.net/docs/scripting-manual/working-with-events/triggering-events/) at 1 MiB/s when available, with 30-second request timeouts. Large recordings and slow networks can delay checkpoints; the workspace indicator confirms when the server has acknowledged a save.
 
 Export JSON or back up server KVP data to preserve scenes: resource ZIPs contain code, not player libraries. Attachments last for the current session and are not persisted as entity handles; reattach a loaded route to a new target. Set `FreezePlayer=false` if the player's body needs to keep moving.
 
-Closing, death, respawn, native failure or resource stop cleans up the owned camera, NUI focus, streaming focus and player freeze. Pre-existing frozen state is preserved; other resources' cameras are not destroyed. `simple_weather` is integrated for local overrides and authoritative resync on close. Other weather controllers may need integration. Use one camera editor at a time.
+Closing, death, respawn, native failure or resource stop cleans up the owned camera, NUI focus, streaming focus and player freeze. Pre-existing frozen state is preserved; other resources' cameras are not destroyed. RedM retains `simple_weather` integration and authoritative resync on close. FiveM uses local weather/clock overrides and restores the prior weather while clearing the clock override on close. A continuously syncing external weather resource may overwrite local settings; coordinate that controller for filming or set `WeatherEnabled=false`. No framework-specific global weather changes are made. Use one camera editor at a time.
 
 ## Validation and current limits
 
-Development tools are needed only to change or test the source: Node.js 24 and Python 3.13. From a repository checkout, run `pnpm install --frozen-lockfile`, `python -m pip install -r requirements-dev.txt`, then `python tests/arbat16_camera_suite.py`. This checks Lua syntax, interpolation, storage, a mocked RedM runtime, the JavaScript model and NUI controls. Run `python tools/build_release.py` to produce an installable ZIP and SHA-256 checksum. Test dependencies are excluded from the downloadable resource.
+Development tools are needed only to change or test the source: Node.js 24 and Python 3.13. From a repository checkout, run `pnpm install --frozen-lockfile`, `python -m pip install -r requirements-dev.txt`, then `python tests/arbat16_camera_suite.py`. This checks Lua syntax, interpolation, storage, both mocked game runtimes, the JavaScript model and NUI controls. Run `python tools/build_release.py` to produce an installable ZIP and SHA-256 checksum. Test dependencies are excluded from the downloadable resource.
 
-The lens exposes the documented RedM focus-distance native. Full near/far/strength DOF blur controls are not implemented: the verified native database does not describe their required pointer layout. No guessed native memory structures are used. Focus appearance depends on game graphics settings and camera behavior.
+FiveM exposes a depth-of-field toggle and blur strength, using GTA V shallow-DOF natives with a focus band around the chosen distance. RedM retains its documented focus-distance control; unsupported full DOF controls are hidden. Graphics settings and the scene affect the visible result.
 
-Offline checks do not prove actual rendering, input capture or compatibility in a running RedM client. This release still needs an in-game smoke test on the target server. For errors, check the `[arbat16_camera]` message in F8 and record the action that caused it.
+Offline checks verify contracts, not actual rendering or server compatibility. This universal release still needs an in-game smoke test in **both FiveM and RedM**. Test flight/Shift, recording and playback, vehicle/horse attachment, saved workspace restoration, Black & White, weather/time and cleanup. For errors, check `[arbat16_camera]` in F8 and record the action that caused it.
 
 ## License
 

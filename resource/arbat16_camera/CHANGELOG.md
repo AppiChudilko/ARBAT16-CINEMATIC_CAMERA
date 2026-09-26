@@ -1,3 +1,12 @@
+# 1.8.0 — Universal FiveM and RedM resource
+
+- One installable `arbat16_camera` folder, with automatic game detection on client and server.
+- Separate verified GTA V and RDR3 native tables; shared editor, camera routes, storage and permissions.
+- Game-specific weather, filters, mouse controls, attachment and cleanup; existing RedM behavior retained.
+- FiveM vehicle attachment and optional shallow depth of field with focus and strength controls.
+- English UI adapts its catalog and controls to the current game; `/ar16_cam` remains unchanged.
+- Platform, runtime, storage and NUI checks cover both game paths. Live game validation remains required.
+
 # Arbat16 Camera changelog
 
 ## 1.7.1 — 2026-09-25

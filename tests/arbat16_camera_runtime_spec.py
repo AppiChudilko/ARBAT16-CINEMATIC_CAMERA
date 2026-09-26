@@ -1,9 +1,17 @@
-"""Mocked RedM runtime contract tests. Requires Python + lupa (Lua 5.4); no game session or downloaded fixtures."""
+"""Mocked runtime contracts for either game. Pass rdr3 or gta5; no live game session."""
 from pathlib import Path
+import sys
 from lupa.lua54 import LuaRuntime
 ROOT = Path(__file__).resolve().parents[1]
 root = ROOT / 'resource' / 'arbat16_camera'
-lua=LuaRuntime(unpack_returned_tuples=True)
+GAME = sys.argv[1] if len(sys.argv) > 1 else 'rdr3'
+assert GAME in ('rdr3', 'gta5')
+def new_lua():
+    runtime = LuaRuntime(unpack_returned_tuples=True)
+    runtime.globals().TEST_GAME = GAME
+    runtime.execute("function GetGameName() return TEST_GAME=='gta5' and 'fivem' or 'redm' end")
+    return runtime
+lua=new_lua()
 for name in ('shared/core.lua','shared/director.lua','shared/flight.lua','client/natives.lua'):
     lua.execute((root/name).read_text(encoding='utf-8-sig'))
 # Exercise the real wrapper before replacing its transport with the runtime stub.
@@ -26,7 +34,9 @@ assert(math.type(seen.args[5])=='integer','rotation order remains integer')
 local visible,x,y=FC.Natives.call('GET_SCREEN_COORD_FROM_WORLD_COORD',1,2,3,'px','py')
 assert(visible==true and x==.25 and y==.75,'BOOL conversion preserves pointer outputs')
 assert(seen.args[4]=='px' and seen.args[5]=='py' and seen.args[6]=='return' and seen.args[7]=='integer')
-assert(FC.Natives.call('IS_ENTITY_DEAD',1)==false,'native numeric zero is false')
+local dead
+if TEST_GAME=='gta5' then dead=FC.Natives.call('IS_ENTITY_DEAD',1,false) else dead=FC.Natives.call('IS_ENTITY_DEAD',1) end
+assert(dead==false,'native numeric zero is false')
 local a,b,c,d=FC.Natives.call('GET_ENTITY_MATRIX',1,'r','f','u','p')
 assert(a=='right' and b=='forward' and c=='up' and d=='position','void native pointer outputs')
 assert(not pcall(FC.Natives.call,'SET_CAM_FOV',100),'wrong native arity rejected')
@@ -49,6 +59,7 @@ function TriggerServerEvent(...)
  T.server[#T.server+1]=args
 end
 function GetResourceState() return 'started' end
+function TriggerEvent(...) T.localEvent=table.pack(...) end
 function GetCurrentResourceName() return 'arbat16_camera' end
 function CreateThread(f) T.thread=coroutine.create(f) end
 function Wait() coroutine.yield() end
@@ -59,12 +70,12 @@ FC.Natives.call=function(n,...)
  T.calls[#T.calls+1]={name=n,args=a}
  if n=='GET_GAME_TIMER' then return T.tick
  elseif n=='GET_FRAME_TIME' then return T.frameTime or .016
- elseif n=='GET_DISABLED_CONTROL_NORMAL' then return a[2]==0xA987235F and (T.mouseX or 0) or (T.mouseY or 0)
+ elseif n=='GET_DISABLED_CONTROL_NORMAL' then return (a[2]==(TEST_GAME=='gta5' and 1 or 0xA987235F)) and (T.mouseX or 0) or (T.mouseY or 0)
  elseif n=='IS_PAUSE_MENU_ACTIVE' then return T.paused==true
  elseif n=='PLAYER_PED_ID' then return 1
  elseif n=='DOES_ENTITY_EXIST' then return true
  elseif n=='IS_ENTITY_DEAD' then return T.dead==true
- elseif n=='_IS_ENTITY_FROZEN' then return T.frozen
+ elseif n=='_IS_ENTITY_FROZEN' or n=='IS_ENTITY_POSITION_FROZEN' then return T.frozen
  elseif n=='FREEZE_ENTITY_POSITION' then T.frozen=a[2]
  elseif n=='GET_RENDERING_CAM' then return T.rendering
  elseif n=='CREATE_CAM' then return 100
@@ -79,13 +90,18 @@ FC.Natives.call=function(n,...)
  elseif n=='GET_FINAL_RENDERED_CAM_ROT' then return {x=0,y=0,z=0}
  elseif n=='GET_FINAL_RENDERED_CAM_FOV' then return 50
  elseif n=='GET_ENTITY_COORDS' then return {x=0,y=0,z=0}
- elseif n=='GET_ENTITY_MATRIX' then return {x=1,y=0,z=0},{x=0,y=1,z=0},{x=0,y=0,z=1},{x=T.entityX,y=0,z=0}
+ elseif n=='GET_ENTITY_MATRIX' then
+  local right,forward={x=1,y=0,z=0},{x=0,y=1,z=0}
+  if TEST_GAME=='gta5' then return forward,right,{x=0,y=0,z=1},{x=T.entityX,y=0,z=0} end
+  return right,forward,{x=0,y=0,z=1},{x=T.entityX,y=0,z=0}
  elseif n=='GET_CLOCK_HOURS' then return 12
  elseif n=='GET_CLOCK_MINUTES' then return 0
- elseif n=='_GET_NEXT_WEATHER_TYPE_HASH_NAME' then return 123
- elseif n=='GET_HASH_KEY' then return a[1]=='SUNNY' and 123 or 456
+ elseif n=='_GET_NEXT_WEATHER_TYPE_HASH_NAME' or n=='GET_PREV_WEATHER_TYPE_HASH_NAME' then return 123
+ elseif n=='GET_HASH_KEY' then return (a[1]=='SUNNY' or a[1]=='CLEAR') and 123 or 456
+ elseif n=='SET_CURR_WEATHER_STATE' then
+  T.restoredWeatherHash=a[1];T.restoredWeatherNextHash=a[2];T.restoredWeatherBlend=a[3]
  elseif n=='GET_SCREEN_COORD_FROM_WORLD_COORD' then return true,.5+a[1]/100,.5+a[2]/100
- elseif n=='GET_MOUNT' then return 2
+ elseif n=='GET_MOUNT' or n=='GET_VEHICLE_PED_IS_IN' then return 2
  end
 end
 function T.request(n,d)
@@ -104,7 +120,8 @@ lua.execute((root/'client/main.lua').read_text(encoding='utf-8-sig'))
 lua.execute('''
 T.action('ready');T.invalidCamera=true;T.commands.ar16_cam();T.events['arbat16_camera:openAllowed'](true)
 assert(not T.focus and not T.frozen,'invalid camera handle cannot open the editor or freeze the player')
-T.invalidCamera=nil;T.open();T.step();assert(T.last('open').capabilities.dofBlur==false)
+T.invalidCamera=nil;T.open();T.step();assert(T.last('open').capabilities.dofBlur==(TEST_GAME=='gta5'))
+assert(T.last('open').game==TEST_GAME,'NUI receives the detected game')
 local revision=T.last('open').revision
 assert(type(revision)=='number','open seeds the authoritative revision')
 local captureResult=T.action('capture');assert(#T.last('scene').scene.frames==1,'capture')
@@ -154,7 +171,7 @@ local loop=FC.Core.copy(s);loop.loop=true;T.action('scene',{scene=loop});T.actio
 assert(T.last('state').camera.pos.y==loop.frames[#loop.frames].pos.y,'loop scrub endpoint remains final frame')
 T.action('scene',{scene=s})
 T.action('stop');assert(T.last('state').time==0,'stop')
-T.action('attach',{mode='mount',rotate=true});T.entityX=10;T.step(200);assert(T.last('state').camera.pos.x>9,'attachment')
+T.action('attach',{mode=(TEST_GAME=='gta5' and 'vehicle' or 'mount'),rotate=true});T.entityX=10;T.step(200);assert(T.last('state').camera.pos.x>9,'attachment')
 T.action('environment',{weather='RAIN',hour=20,minute=30});T.step(200)
 assert(T.last('state').camera.weather=='RAIN' and T.last('state').camera.hour==20,'environment persistence')
 T.action('attach',{mode='detach'});assert(T.last('state').attachment==false,'detach')
@@ -182,7 +199,16 @@ local editedCount=#T.last('scene').scene.frames
 T.events['arbat16_camera:storageResult'](request[2],{ok=true,scene=s,items={}})
 assert(#T.last('scene').scene.frames==editedCount,'late load response cannot discard newer edits')
 T.action('close');assert(not T.focus and not T.frozen and T.destroyed==100,'cleanup')
-assert(T.server[#T.server][1]=='simple_weather:request','weather restore')
+if TEST_GAME=='gta5' then
+ assert(T.restoredWeatherHash==123 and T.restoredWeatherNextHash==123 and T.restoredWeatherBlend==0,'GTA previous weather restored from captured hash')
+ local released,restored
+ for i,call in ipairs(T.calls) do
+  assert(call.name~='SET_WEATHER_TYPE_NOW','unsupported GTA network weather native never called')
+  if call.name=='CLEAR_WEATHER_TYPE_NOW_PERSIST_NETWORK' then released=i;assert(call.args[1]==0,'network override cleared immediately') end
+  if call.name=='SET_CURR_WEATHER_STATE' then restored=i end
+ end
+ assert(released and restored and released<restored,'network persistence released before local weather restoration')
+else assert(T.server[#T.server][1]=='simple_weather:request','RedM weather controller resync') end
 T.rendering=777;T.frozen=true;T.open();T.commands.ar16_camclose();assert(T.rendering==777 and T.frozen,'prior state')
 T.frozen=false;T.open();T.failNative='GET_RENDERING_CAM';T.commands.ar16_camclose()
 assert(not T.focus and not T.frozen and T.destroyed==100,'native error cannot trap NUI input')
@@ -196,10 +222,10 @@ T.open();T.events.onClientResourceStop('another_resource');assert(T.focus,'anoth
 T.events.onClientResourceStop('arbat16_camera');assert(not T.focus and not T.frozen,'resource stop cleanup')
 print('Runtime smoke: capture/replace, NUI flight, transactional validation, stalled-frame playback, seek, attachment, environment, recording, storage races, cleanup and death passed.')
 ''')
-print('Lua files compile; all native call arities match verified RDR3 signatures.')
+print(f'{GAME}: Lua files compile and runtime native arities match the selected platform table.')
 
 # Exercise native flight independently, with no browser keyboard packets.
-native=LuaRuntime(unpack_returned_tuples=True)
+native=new_lua()
 for name in ('shared/core.lua','shared/director.lua','shared/flight.lua','client/natives.lua'):
     native.execute((root/name).read_text(encoding='utf-8-sig'))
 native.execute(runtime_harness)
@@ -292,7 +318,7 @@ assert(not T.focus and not T.frozen,'resource stop cleans native flight')
 print('Native flight: raw WASD/QE/modifiers, mouse axes, held-key guards, focus/pause suspension, Tab/F/H/Space/Escape, playback, diagnostic probes/session resets and logging-failure isolation passed.')
 
 def director_runtime(native_input=False):
-    runtime = LuaRuntime(unpack_returned_tuples=True)
+    runtime = new_lua()
     for filename in ('shared/core.lua', 'shared/director.lua', 'shared/flight.lua', 'client/natives.lua'):
         runtime.execute((root / filename).read_text(encoding='utf-8-sig'))
     runtime.execute(runtime_harness)
@@ -452,7 +478,7 @@ assert(T.focus and T.last('open').camera.pos.x==0 and #T.last('open').scene.fram
 print('Director runtime: camera bank, custom presets, generated motion, autosave/reopen/reconnect, attachment baking, failure recovery and distance recovery passed.')
 
 def stabilized_runtime(native_input):
-    runtime=LuaRuntime(unpack_returned_tuples=True)
+    runtime=new_lua()
     for filename in ('shared/core.lua','shared/director.lua','shared/flight.lua','client/natives.lua'):
         runtime.execute((root/filename).read_text(encoding='utf-8-sig'))
     runtime.execute(runtime_harness)
@@ -616,7 +642,7 @@ assert(#T.last('open').scene.frames==5,'close retains final recorded endpoint fo
 
 attached_rec = director_runtime()
 attached_rec.execute('''
-T.open();T.action('capture');T.action('attach',{mode='mount',rotate=true})
+T.open();T.action('capture');T.action('attach',{mode=(TEST_GAME=='gta5' and 'vehicle' or 'mount'),rotate=true})
 T.action('record',{enabled=true});T.frameTime=.05
 T.entityX=10;T.step(50);T.entityX=20;T.step(50)
 T.action('record',{enabled=false})
@@ -626,7 +652,7 @@ assert(frames[1].pos.x==20,'existing authored route is baked on detach')
 assert(take.take.samples[1][2]==0 and take.take.samples[2][2]==10 and take.take.samples[3][2]==20,'recording retains actual moving-entity world positions')
 T.action('seek',{time=frames[1].duration+.05})
 assert(math.abs(T.nativeCamPos.x-10)<1e-9,'attached take playback does not transform world coordinates twice')
-T.action('attach',{mode='mount',rotate=true});T.entityX=30;T.step(50)
+T.action('attach',{mode=(TEST_GAME=='gta5' and 'vehicle' or 'mount'),rotate=true});T.entityX=30;T.step(50)
 T.action('save',{name='Attached existing take'})
 local snapshot=T.server[#T.server][4].scene.frames[2].take.samples
 assert(snapshot[1][2]==10 and snapshot[2][2]==20 and snapshot[3][2]==30,'saving an attached existing take bakes every sample')
@@ -649,13 +675,13 @@ T.action('record',{enabled=false})
 ''')
 load_during_rec = director_runtime()
 load_during_rec.execute('''
-T.open();T.action('capture');T.action('attach',{mode='mount',rotate=true})
+T.open();T.action('capture');T.action('attach',{mode=(TEST_GAME=='gta5' and 'vehicle' or 'mount'),rotate=true})
 T.action('load',{name='Another scene'});local request=T.server[#T.server]
 T.action('record',{enabled=true});T.entityX=10;T.step(40)
 local incoming={version=1,name='Another scene',frames={FC.Core.defaultFrame({x=100,y=0,z=2},{x=0,y=0,z=0})},loop=false,speed=1}
 T.events['arbat16_camera:storageResult'](request[2],{ok=true,scene=incoming,items={}})
 T.action('settings')
-assert(T.last('state').recording and T.last('state').attachment.mode=='mount','late load cannot detach a target during recording')
+assert(T.last('state').recording and T.last('state').attachment.mode==(TEST_GAME=='gta5' and 'vehicle' or 'mount'),'late load cannot detach a target during recording')
 assert(T.last('scene').scene.name=='New scene','late load preserves authored scene while recording')
 assert(T.last('toast').message:find('Recording started while loading',1,true),'late load reports why it was not applied')
 local events=#T.server;T.action('load',{name='Another scene'})
@@ -831,3 +857,36 @@ assert(T.lastSave()[2]~=previousRequest,'native G itself schedules autosave with
 assert(T.ackSave().settings.grid==false,'native-only toggle persists its new visibility')
 ''')
 print('Composition guides runtime: six patterns, opacity boundaries, transactional settings, NUI/native G toggles, entry/focus/pause guards, autosave/reopen/reconnect and legacy migration passed.')
+
+
+# GTA-only DOF uses scalar native contracts and cannot drift from recorded takes.
+if GAME == 'gta5':
+    dof_runtime = director_runtime()
+    dof_runtime.execute("""
+T.open();T.step()
+local function calls(name)
+ local total,last=0,nil
+ for _,call in ipairs(T.calls) do if call.name==name then total=total+1;last=call end end
+ return total,last
+end
+assert(calls('SET_USE_HI_DOF')==0,'DOF is off by default')
+T.action('lens',{dof={enabled=true,focus=20,strength=.8}})
+local _,near=calls('SET_CAM_NEAR_DOF');local _,far=calls('SET_CAM_FAR_DOF');local _,strength=calls('SET_CAM_DOF_STRENGTH')
+assert(near.args[2]==18 and far.args[2]==22 and strength.args[2]==.8,'GTA focus band and strength reach native')
+local before=calls('SET_USE_HI_DOF');T.step();assert(calls('SET_USE_HI_DOF')==before+1,'high DOF is applied each game frame')
+T.action('record',{enabled=true});T.step(34)
+local original=T.last('state').camera.fov
+local result=T.request('lens',{fov=90,dof={enabled=false}})
+assert(not result.ok and T.last('state').camera.fov==original,'REC cannot mutate DOF or partially apply a rejected lens request')
+assert(not T.request('lens',{dof={strength=.3}}).ok,'REC blur-strength change rejected')
+T.action('lens',{dof={enabled=true,focus=30,strength=.8}});T.step(34)
+T.action('record',{enabled=false})
+local take=T.last('scene').scene.frames[#T.last('scene').scene.frames]
+assert(take.dof.enabled and take.dof.strength==.8,'recorded clip preserves initial DOF settings')
+assert(take.take.samples[#take.take.samples][9]==30,'recorded focus follows actual lens movement')
+T.action('lens',{dof={enabled=false}});before=calls('SET_USE_HI_DOF');T.step()
+assert(calls('SET_USE_HI_DOF')==before,'disabled DOF stops per-frame high-DOF calls')
+local _,shallow=calls('SET_CAM_USE_SHALLOW_DOF_MODE');assert(shallow.args[2]==false,'disabled DOF explicitly clears camera mode')
+T.action('close')
+""")
+    print('GTA DOF: native focus/strength, per-frame mode, disabled mode and REC consistency passed.')

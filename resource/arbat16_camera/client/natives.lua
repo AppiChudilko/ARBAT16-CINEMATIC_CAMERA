@@ -1,7 +1,73 @@
--- RDR3 signatures verified against alloc8or/rdr3-nativedb-data on 2026-09-24.
--- No GTA-only natives or undocumented DOF pointer buffers.
+-- Verified native contracts: alloc8or GTA V / RDR3 NativeDB, 2026-09-25.
+-- Keep separate game tables: identical names do not imply identical ABIs.
 FC = FC or {}
-FC.Natives = {spec = {
+local game = assert(FC.Core and FC.Core.game, 'Camera platform must load before natives')
+local specs = {
+gta5 = {
+    CLEAR_FOCUS = {hash=0x31B73D1EA9F01DA2, arity=0, return_type='void'},
+    CLEAR_OVERRIDE_WEATHER = {hash=0x338D2E3477711050, arity=0, return_type='void'},
+    CLEAR_TIMECYCLE_MODIFIER = {hash=0x0F07E7745A236711, arity=0, return_type='void'},
+    CLEAR_WEATHER_TYPE_NOW_PERSIST_NETWORK = {hash=0x0CF97F497FE7D048, arity=1, return_type='void'},
+    CLEAR_WEATHER_TYPE_PERSIST = {hash=0xCCC39339BEF76CF5, arity=0, return_type='void'},
+    CREATE_CAM = {hash=0xC3981DCE61D9E13F, arity=2, return_type='Cam'},
+    DESTROY_CAM = {hash=0x865908C81A2C22E9, arity=2, return_type='void'},
+    DISABLE_ALL_CONTROL_ACTIONS = {hash=0x5F4B6931816E599B, arity=1, return_type='void'},
+    DOES_CAM_EXIST = {hash=0xA7A932170592B50E, arity=1, return_type='BOOL'},
+    DOES_ENTITY_EXIST = {hash=0x7239B21A38F536BA, arity=1, return_type='BOOL'},
+    FREEZE_ENTITY_POSITION = {hash=0x428CA6DBD1094446, arity=2, return_type='void'},
+    GET_CAM_COORD = {hash=0xBAC038F7459AE5AE, arity=1, return_type='Vector3'},
+    GET_CLOCK_HOURS = {hash=0x25223CA6B4D20B7F, arity=0, return_type='int'},
+    GET_CLOCK_MINUTES = {hash=0x13D2B8ADD79640F2, arity=0, return_type='int'},
+    GET_DISABLED_CONTROL_NORMAL = {hash=0x11E65974A982637C, arity=2, return_type='float'},
+    GET_ENTITY_COORDS = {hash=0x3FEF770D40960D5A, arity=2, return_type='Vector3'},
+    GET_ENTITY_MATRIX = {hash=0xECB2FC7235A7D137, arity=5, return_type='void'},
+    GET_ENTITY_ROTATION = {hash=0xAFBD61CC738D9EB9, arity=2, return_type='Vector3'},
+    GET_ENTITY_TYPE = {hash=0x8ACD366038D14505, arity=1, return_type='int'},
+    GET_FINAL_RENDERED_CAM_COORD = {hash=0xA200EB1EE790F448, arity=0, return_type='Vector3'},
+    GET_FINAL_RENDERED_CAM_FOV = {hash=0x80EC114669DAEFF4, arity=0, return_type='float'},
+    GET_FINAL_RENDERED_CAM_ROT = {hash=0x5B4E4C817FCC2DFB, arity=1, return_type='Vector3'},
+    GET_FRAME_TIME = {hash=0x15C40837039FFAF7, arity=0, return_type='float'},
+    GET_GAME_TIMER = {hash=0x9CD27B0045628463, arity=0, return_type='int'},
+    GET_GAMEPLAY_CAM_COORD = {hash=0x14D6F5678D8F1B37, arity=0, return_type='Vector3'},
+    GET_GAMEPLAY_CAM_FOV = {hash=0x65019750A0324133, arity=0, return_type='float'},
+    GET_GAMEPLAY_CAM_ROT = {hash=0x837765A25378F0BB, arity=1, return_type='Vector3'},
+    GET_HASH_KEY = {hash=0xD24D37CC275948CC, arity=1, return_type='Hash'},
+    GET_PREV_WEATHER_TYPE_HASH_NAME = {hash=0x564B884A05EC45A3, arity=0, return_type='Hash'},
+    GET_RENDERING_CAM = {hash=0x5234F9F10919EABA, arity=0, return_type='Cam'},
+    GET_SCREEN_COORD_FROM_WORLD_COORD = {hash=0x34E82F05DF2974F5, arity=5, return_type='BOOL', float_args={1,2,3}},
+    GET_SHAPE_TEST_RESULT = {hash=0x3D87450E15D98694, arity=5, return_type='int'},
+    GET_TIMECYCLE_MODIFIER_INDEX = {hash=0xFDF3D97C674AFB66, arity=0, return_type='int'},
+    GET_VEHICLE_PED_IS_IN = {hash=0x9A9112A0FE9A4713, arity=2, return_type='Vehicle'},
+    HIDE_HUD_AND_RADAR_THIS_FRAME = {hash=0x719FF505F097FD20, arity=0, return_type='void'},
+    IS_CAM_ACTIVE = {hash=0xDFB2B516207D3534, arity=1, return_type='BOOL'},
+    IS_CAM_RENDERING = {hash=0x02EC0AF5C5A49B7A, arity=1, return_type='BOOL'},
+    IS_ENTITY_DEAD = {hash=0x5F9532F3B5CC2551, arity=2, return_type='BOOL'},
+    IS_PAUSE_MENU_ACTIVE = {hash=0xB0034A223497FFCB, arity=0, return_type='BOOL'},
+    NETWORK_CLEAR_CLOCK_TIME_OVERRIDE = {hash=0xD972DF67326F966E, arity=0, return_type='void'},
+    NETWORK_OVERRIDE_CLOCK_TIME = {hash=0xE679E3E06E363892, arity=3, return_type='void'},
+    PLAYER_ID = {hash=0x4F8644AF03D0E0D6, arity=0, return_type='Player'},
+    PLAYER_PED_ID = {hash=0xD80958FC74E988A6, arity=0, return_type='Ped'},
+    RENDER_SCRIPT_CAMS = {hash=0x07E5B515DB0636FC, arity=6, return_type='void'},
+    SET_CAM_ACTIVE = {hash=0x026FB97D0A425F84, arity=2, return_type='void'},
+    SET_CAM_COORD = {hash=0x4D41783FB745E42E, arity=4, return_type='void', float_args={2,3,4}},
+    SET_CAM_DOF_STRENGTH = {hash=0x5EE29B4D7D5DF897, arity=2, return_type='void', float_args={2}},
+    SET_CAM_FAR_DOF = {hash=0xEDD91296CD01AEE0, arity=2, return_type='void', float_args={2}},
+    SET_CAM_FOV = {hash=0xB13C14F66A00D047, arity=2, return_type='void', float_args={2}},
+    SET_CAM_NEAR_CLIP = {hash=0xC7848EFCCC545182, arity=2, return_type='void', float_args={2}},
+    SET_CAM_NEAR_DOF = {hash=0x3FA4BF0A7AB7DE2C, arity=2, return_type='void', float_args={2}},
+    SET_CAM_ROT = {hash=0x85973643155D0B07, arity=5, return_type='void', float_args={2,3,4}},
+    SET_CAM_USE_SHALLOW_DOF_MODE = {hash=0x16A96863A17552BB, arity=2, return_type='void'},
+    SET_CURR_WEATHER_STATE = {hash=0x578C752848ECFA0C, arity=3, return_type='void', float_args={3}},
+    SET_FOCUS_POS_AND_VEL = {hash=0xBB7454BAFF08FE25, arity=6, return_type='void', float_args={1,2,3,4,5,6}},
+    SET_TIMECYCLE_MODIFIER = {hash=0x2C933ABF17A1DF41, arity=1, return_type='void'},
+    SET_TIMECYCLE_MODIFIER_STRENGTH = {hash=0x82E7FFCD5B2326B3, arity=1, return_type='void', float_args={1}},
+    SET_USE_HI_DOF = {hash=0xA13B0222F3D94A94, arity=0, return_type='void'},
+    SET_WEATHER_TYPE_NOW_PERSIST = {hash=0xED712CA327900C8A, arity=1, return_type='void'},
+    START_SHAPE_TEST_LOS_PROBE = {hash=0x7EE9F5D83DD4F90E, arity=9, return_type='int', float_args={1,2,3,4,5,6}},
+    -- https://github.com/citizenfx/fivem/blob/master/ext/native-decls/IsEntityPositionFrozen.md
+    IS_ENTITY_POSITION_FROZEN = {builtin='IsEntityPositionFrozen', arity=1, return_type='BOOL'},
+},
+rdr3 = {
     ANIMPOSTFX_PLAY = {hash=0x4102732DF6B4005F, arity=1, return_type='void'},
     ANIMPOSTFX_STOP = {hash=0xB4FD7446BAB2F394, arity=1, return_type='void'},
     ANIMPOSTFX_IS_RUNNING = {hash=0x4A123E85D7C4CA0B, arity=1, return_type='BOOL'},
@@ -64,10 +130,17 @@ FC.Natives = {spec = {
     SET_TIMECYCLE_MODIFIER_STRENGTH = {hash=0xFDB74C9CC54C3F37, arity=1, return_type='void', float_args={1}},
     SET_WEATHER_TYPE = {hash=0x59174F1AFE095B5A, arity=6, return_type='void', float_args={5}},
     START_SHAPE_TEST_LOS_PROBE = {hash=0x7EE9F5D83DD4F90E, arity=9, return_type='ScrHandle', float_args={1,2,3,4,5,6}},
-}}
+}
+}
+FC.Natives = {game=game, spec=assert(specs[game], 'Unsupported camera platform: ' .. tostring(game))}
 function FC.Natives.call(name, ...)
-    local spec = assert(FC.Natives.spec[name], "Unknown RedM native: " .. tostring(name))
+    local spec = assert(FC.Natives.spec[name], "Unknown " .. FC.Natives.game .. " native: " .. tostring(name))
     assert(select("#", ...) == spec.arity, "Native arity mismatch: " .. name)
+    if spec.builtin then
+        local native = _G[spec.builtin]
+        assert(type(native)=='function', 'Missing Cfx native: ' .. spec.builtin)
+        return native(...)
+    end
     local args = table.pack(...)
     for _, index in ipairs(spec.float_args or {}) do args[index] = args[index] + 0.0 end
     if spec.return_type ~= "void" then

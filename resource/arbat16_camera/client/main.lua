@@ -1,5 +1,7 @@
--- Arbat16 Camera: standalone RedM editor runtime. All timeline values are seconds.
+-- Arbat16 Camera: standalone FiveM / RedM editor. Timeline values are seconds.
 local C, N, F = FC.Core, FC.Natives.call, FC.Flight
+local game=FC.Natives.game
+local isGta=game=='gta5'
 local cfg = FCConfig or {}
 local active, cam, player, previousCam, previousFrozen = false, nil, nil, nil, false
 local scene = {version=1, name='New scene', frames={}, loop=false, speed=1}
@@ -37,10 +39,20 @@ local rawModifiers = {ShiftLeft={0x10,0xA0,0xA1},
     ControlLeft={0x11,0xA2,0xA3},AltLeft={0x12,0xA4,0xA5}}
 local allowedKeys = {KeyW=true,KeyA=true,KeyS=true,KeyD=true,KeyQ=true,KeyE=true,
     ShiftLeft=true,ShiftRight=true,ControlLeft=true,ControlRight=true,AltLeft=true,AltRight=true}
-local weatherNames = {sunny=true,clouds=true,overcast=true,overcastdark=true,rain=true,drizzle=true,
+local weatherNames = isGta and {clear=true,extrasunny=true,clouds=true,overcast=true,rain=true,clearing=true,
+    thunder=true,smog=true,foggy=true,xmas=true,snow=true,snowlight=true,blizzard=true,
+    halloween=true,neutral=true} or {sunny=true,clouds=true,overcast=true,overcastdark=true,rain=true,drizzle=true,
     thunder=true,thunderstorm=true,fog=true,misty=true,highpressure=true,snow=true,blizzard=true,
     snowlight=true,groundblizzard=true,hurricane=true,whiteout=true,sandstorm=true,sleet=true,hail=true}
 local function now() return N('GET_GAME_TIMER') end
+local function entityCoords(entity)
+    if isGta then return N('GET_ENTITY_COORDS',entity,true) end
+    return N('GET_ENTITY_COORDS',entity,true,true)
+end
+local function entityDead(entity)
+    if isGta then return N('IS_ENTITY_DEAD',entity,false) end
+    return N('IS_ENTITY_DEAD',entity)
+end
 local function finite(n) return type(n)=='number' and n==n and n>-math.huge and n<math.huge end
 local function num(n, low, high, fallback) return finite(n) and C.clamp(n,low,high) or fallback end
 local function vec(v) return {x=v.x+0.0,y=v.y+0.0,z=v.z+0.0} end
@@ -133,8 +145,11 @@ end
 local function localVector(b,v) return {x=dot(b.right,v),y=dot(b.forward,v),z=dot(b.up,v)} end
 local function worldVector(b,v) return add(add(mul(b.right,v.x),mul(b.forward,v.y)),mul(b.up,v.z)) end
 local function entityBasis(entity)
-    local right,forward,up,pos=N('GET_ENTITY_MATRIX',entity,Citizen.PointerValueVector(),
+    local first,second,up,pos=N('GET_ENTITY_MATRIX',entity,Citizen.PointerValueVector(),
         Citizen.PointerValueVector(),Citizen.PointerValueVector(),Citizen.PointerValueVector())
+    -- GTA V entity matrices return forward first; RDR3 returns right first.
+    local right,forward=first,second
+    if isGta then right,forward=second,first end
     return {right=vec(right),forward=vec(forward),up=vec(up),pos=vec(pos)}
 end
 local function orientation(b)
@@ -160,7 +175,7 @@ local function transformPose(pose, inverse)
 end
 local function poseWithinReach(pose)
     if not player or not N('DOES_ENTITY_EXIST',player) then return false end
-    return length(sub(pose.pos,vec(N('GET_ENTITY_COORDS',player,true,true)))) <= (cfg.MaxDistance or 2000)
+    return length(sub(pose.pos,vec(entityCoords(player)))) <= (cfg.MaxDistance or 2000)
 end
 local function rebuildPath()
     pathCache={}
@@ -248,16 +263,18 @@ local function environment(force)
     local name=type(camera.weather)=='string' and camera.weather:lower() or nil
     if name and weatherNames[name] and (force or name~=lastWeather) then
         environmentTouched=true
-        N('_SET_WEATHER_TYPE_FROZEN',false)
+        if not isGta then N('_SET_WEATHER_TYPE_FROZEN',false) end
         N('CLEAR_OVERRIDE_WEATHER');N('CLEAR_WEATHER_TYPE_PERSIST')
-        N('SET_WEATHER_TYPE',N('GET_HASH_KEY',name:upper()),true,true,true,0.5,false)
+        if isGta then N('SET_WEATHER_TYPE_NOW_PERSIST',name:upper())
+        else N('SET_WEATHER_TYPE',N('GET_HASH_KEY',name:upper()),true,true,true,0.5,false) end
         lastWeather=name
     end
     local hour,minute=math.floor(num(camera.hour,0,23,12)),math.floor(num(camera.minute,0,59,0))
     local clock=hour*60+minute
     if force or lastClock~=clock then
         environmentTouched=true;lastClock=clock
-        N('_NETWORK_CLOCK_TIME_OVERRIDE',hour,minute,0,0,true)
+        if isGta then N('NETWORK_OVERRIDE_CLOCK_TIME',hour,minute,0)
+        else N('_NETWORK_CLOCK_TIME_OVERRIDE',hour,minute,0,0,true) end
     end
 end
 local function applyCamera()
@@ -267,9 +284,22 @@ local function applyCamera()
     N('SET_CAM_COORD',cam,rendered.pos.x,rendered.pos.y,rendered.pos.z)
     N('SET_CAM_ROT',cam,rendered.rot.x,rendered.rot.y,rendered.rot.z,2)
     N('SET_CAM_FOV',cam,rendered.fov)
-    -- Only this scalar DOF native has a documented ABI. Blur near/far/strength
-    -- are preserved in scenes for interchange, but no unsafe Any* struct is sent.
-    if camera.dof then N('_SET_CAM_FOCUS_DISTANCE',cam,camera.dof.focus or 10.0) end
+    local dof=rendered.dof or {}
+    local enabled=dof.enabled==true
+    if isGta then N('SET_CAM_USE_SHALLOW_DOF_MODE',cam,enabled) end
+    if isGta and enabled then
+        -- Documented GTA distances define an in-focus band. The focus control
+        -- centers that band, with a 10% half-width (at least five centimetres).
+        local focus=num(dof.focus,0.01,100000,10)
+        local halfWidth=math.max(0.05,focus*0.1)
+        N('SET_CAM_NEAR_DOF',cam,math.max(0,focus-halfWidth))
+        N('SET_CAM_FAR_DOF',cam,focus+halfWidth)
+        N('SET_CAM_DOF_STRENGTH',cam,num(dof.strength,0,1,0.5))
+        N('SET_USE_HI_DOF') -- GTA requires this every rendered frame.
+    elseif not isGta then
+        -- RDR3 only exposes the verified scalar focus setter; blur ABI is not used.
+        N('_SET_CAM_FOCUS_DISTANCE',cam,num(dof.focus,0.01,100000,10))
+    end
     N('SET_FOCUS_POS_AND_VEL',camera.pos.x,camera.pos.y,camera.pos.z,0.0,0.0,0.0)
     DR.apply(scene.director or D.defaults())
 end
@@ -307,7 +337,7 @@ local function persistedFrame(pose)
 end
 local function recordedSample(pose,elapsed)
     return {elapsed,pose.pos.x,pose.pos.y,pose.pos.z,pose.rot.x,pose.rot.y,pose.rot.z,
-        pose.fov,(pose.dof and pose.dof.focus) or 10,pose.hour or 12,pose.minute or 0,pose.weather or 'SUNNY'}
+        pose.fov,(pose.dof and pose.dof.focus) or 10,pose.hour or 12,pose.minute or 0,pose.weather or (isGta and 'CLEAR' or 'SUNNY')}
 end
 local function appendRecordedSample(tickTime,force)
     if not recordBuffer then return end
@@ -451,27 +481,39 @@ local function cleanup()
         if ok and exists then pcall(N,'FREEZE_ENTITY_POSITION',player,false) end
     end
     if environmentTouched then
-        pcall(N,'NETWORK_CLEAR_CLOCK_TIME_OVERRIDE');pcall(N,'_SET_WEATHER_TYPE_FROZEN',false)
+        pcall(N,'NETWORK_CLEAR_CLOCK_TIME_OVERRIDE')
+        if not isGta then pcall(N,'_SET_WEATHER_TYPE_FROZEN',false) end
         pcall(N,'CLEAR_OVERRIDE_WEATHER');pcall(N,'CLEAR_WEATHER_TYPE_PERSIST')
-        if GetResourceState('simple_weather')=='started' then TriggerServerEvent('simple_weather:request')
+        if isGta then
+            -- Release the network override before restoring the captured hash.
+            -- SET_WEATHER_TYPE_NOW is explicitly unsupported in GTA network sessions.
+            pcall(N,'CLEAR_WEATHER_TYPE_NOW_PERSIST_NETWORK',0)
+            if previousWeather then pcall(N,'SET_CURR_WEATHER_STATE',previousWeather,previousWeather,0.0) end
+        elseif GetResourceState('simple_weather')=='started' then TriggerServerEvent('simple_weather:request')
         elseif previousWeather then pcall(N,'SET_WEATHER_TYPE',previousWeather,true,true,true,0.5,false) end
     end
-    environmentTouched=false;lastWeather=nil;lastClock=nil;player=nil;previousCam=nil
+    environmentTouched=false;previousWeather=nil;lastWeather=nil;lastClock=nil;player=nil;previousCam=nil
     pending={}
     message({type='gizmos',points={},lines={}});message({type='close'})
 end
 local function open()
     if active or stopped then return end
     player=N('PLAYER_PED_ID')
-    if player==0 or not N('DOES_ENTITY_EXIST',player) or N('IS_ENTITY_DEAD',player) then player=nil;return end
-    previousCam=N('GET_RENDERING_CAM');previousFrozen=N('_IS_ENTITY_FROZEN',player)
-    previousWeather=N('_GET_NEXT_WEATHER_TYPE_HASH_NAME')
+    if player==0 or not N('DOES_ENTITY_EXIST',player) or entityDead(player) then player=nil;return end
+    previousCam=N('GET_RENDERING_CAM')
+    previousFrozen=N(isGta and 'IS_ENTITY_POSITION_FROZEN' or '_IS_ENTITY_FROZEN',player)
+    local weatherHash=N(isGta and 'GET_PREV_WEATHER_TYPE_HASH_NAME' or '_GET_NEXT_WEATHER_TYPE_HASH_NAME')
+    previousWeather=weatherHash
+    local weatherName
+    for name in pairs(weatherNames) do
+        if N('GET_HASH_KEY',name:upper())==weatherHash then weatherName=name:upper();break end
+    end
     local freshCamera=not camera
     if freshCamera then
         camera=C.defaultFrame(vec(N('GET_FINAL_RENDERED_CAM_COORD')),vec(N('GET_FINAL_RENDERED_CAM_ROT',2)))
         camera.fov=num(N('GET_FINAL_RENDERED_CAM_FOV'),1,130,50)
         camera.hour=N('GET_CLOCK_HOURS');camera.minute=N('GET_CLOCK_MINUTES')
-        for name in pairs(weatherNames) do if N('GET_HASH_KEY',name:upper())==previousWeather then camera.weather=name:upper();break end end
+        if weatherName then camera.weather=weatherName end
     end
     -- Retain the saved shot if the player reconnects far away. Do not silently overwrite it.
     if not poseWithinReach(camera) then
@@ -489,8 +531,8 @@ local function open()
     if cfg.FreezePlayer~=false and not previousFrozen then N('FREEZE_ENTITY_POSITION',player,true) end
     cameraFocus()
     rebuildPath()
-    message({type='open',scene=scene,settings=settings,camera=camera,workspace=workspacePacket(),revision=sceneRevision,stateSequence=stateSequence,
-        capabilities={focusDistance=true,dofBlur=false,projectedPath=true,nativeFlightInput=nativeFlightInput}})
+    message({type='open',game=game,scene=scene,settings=settings,camera=camera,workspace=workspacePacket(),revision=sceneRevision,stateSequence=stateSequence,
+        capabilities={focusDistance=true,dofBlur=isGta,projectedPath=true,nativeFlightInput=nativeFlightInput}})
     sendState()
     if not freshCamera then environment(true) end
     markWorkspace()
@@ -706,11 +748,21 @@ actions.cycleStabilization=function()
     toast('Stabilization: '..label)
 end
 actions.lens=function(data)
+    if isGta and recording and type(data.dof)=='table' then
+        -- A take records focus per sample; its DOF enable/strength are fixed
+        -- on the starting frame. Reject changes before mutating any lens field.
+        local dof=camera.dof or {enabled=false,strength=0.5}
+        local changedEnabled=type(data.dof.enabled)=='boolean' and data.dof.enabled~=(dof.enabled==true)
+        local changedStrength=finite(data.dof.strength) and C.clamp(data.dof.strength,0,1)~=(dof.strength or 0.5)
+        if changedEnabled or changedStrength then return false,'Stop REC before changing depth of field or blur strength' end
+    end
     if finite(data.fov) then camera.fov=C.clamp(data.fov,1,130) end
     if finite(data.roll) then camera.rot.y=C.clamp(data.roll,-180,180) end
     if type(data.dof)=='table' then
         camera.dof=camera.dof or {enabled=false,focus=10,near=1,far=100,strength=0.5}
+        if isGta and type(data.dof.enabled)=='boolean' then camera.dof.enabled=data.dof.enabled end
         if finite(data.dof.focus) then camera.dof.focus=C.clamp(data.dof.focus,0.1,1000) end
+        if isGta and finite(data.dof.strength) then camera.dof.strength=C.clamp(data.dof.strength,0,1) end
     end
     if attachment then attachment.freePose=transformPose(camera,true) end
     applyCamera();sendState()
@@ -725,7 +777,10 @@ end
 actions.attach=function(data)
     if data.mode=='detach' then detach();sendState()
     elseif data.mode=='player' then attach(player,'player',data.rotate)
-    elseif data.mode=='mount' then
+    elseif isGta and data.mode=='vehicle' then
+        local entity=N('GET_VEHICLE_PED_IS_IN',player,false)
+        attach(entity,'vehicle',data.rotate)
+    elseif not isGta and data.mode=='mount' then
         local entity=N('GET_MOUNT',player)
         if entity==0 then entity=N('GET_VEHICLE_PED_IS_IN',player,false) end
         attach(entity,'mount',data.rotate)
@@ -887,8 +942,8 @@ RegisterNUICallback('action',function(data,cb)
     if type(data)~='table' or type(data.action)~='string' or #data.action>32 then cb({ok=false,error='Invalid action',revision=sceneRevision,stateSequence=stateSequence});return end
     if data.action=='ready' then
         uiReady=true;cb({ok=true,revision=sceneRevision,stateSequence=stateSequence})
-        if active then message({type='open',scene=scene,settings=settings,camera=camera,workspace=workspacePacket(),revision=sceneRevision,stateSequence=stateSequence,
-            capabilities={focusDistance=true,dofBlur=false,projectedPath=true,nativeFlightInput=nativeFlightInput}});sendState() end
+        if active then message({type='open',game=game,scene=scene,settings=settings,camera=camera,workspace=workspacePacket(),revision=sceneRevision,stateSequence=stateSequence,
+            capabilities={focusDistance=true,dofBlur=isGta,projectedPath=true,nativeFlightInput=nativeFlightInput}});sendState() end
         return
     end
     local handler=actions[data.action]
@@ -942,13 +997,13 @@ RegisterNetEvent('arbat16_camera:storageResult',function(id,result)
     if type(result.items)=='table' then message({type='library',items=result.items}) end
     markWorkspace()
 end)
-RegisterNetEvent('simple_weather:sync',function()
+if not isGta then RegisterNetEvent('simple_weather:sync',function()
     if active and environmentTouched then
         -- Let the weather resource finish its current handler, then reapply the
         -- editor override. Closing requests a fresh authoritative server sync.
         SetTimeout(50,function() if active then guard(function() environment(true) end) end end)
     end
-end)
+end) end
 RegisterCommand(cfg.Command or 'ar16_cam',function()
     if active then cleanup();return end
     if requestedOpen and now()-requestedOpen<2000 then return end
@@ -1057,10 +1112,10 @@ local function pollNativeFlightInput()
     local nextKeys={}
     for key in pairs(allowedKeys) do if raw[key] and not rawBlocked[key] then nextKeys[key]=true end end
     keys=nextKeys;inputAt=now()
-    -- RDR3 INPUT_LOOK_LR / INPUT_LOOK_UD. Disabled controls remain readable
+    -- Game-specific INPUT_LOOK_LR / INPUT_LOOK_UD. Disabled controls remain readable
     -- after gameplay actions are disabled, while NUI no longer owns the mouse.
-    lookX=num(N('GET_DISABLED_CONTROL_NORMAL',0,0xA987235F),-1,1,0)*100.0
-    lookY=num(N('GET_DISABLED_CONTROL_NORMAL',0,0xD2047988),-1,1,0)*100.0
+    lookX=num(N('GET_DISABLED_CONTROL_NORMAL',0,isGta and 1 or 0xA987235F),-1,1,0)*100.0
+    lookY=num(N('GET_DISABLED_CONTROL_NORMAL',0,isGta and 2 or 0xD2047988),-1,1,0)*100.0
 end
 
 local function pollAim()
@@ -1072,7 +1127,7 @@ local function pollAim()
         if not active or old.cancelled then return end
         if status==2 and (hit==true or hit==1) and entity and entity~=0 and N('DOES_ENTITY_EXIST',entity)
             and (N('GET_ENTITY_TYPE',entity)==1 or N('GET_ENTITY_TYPE',entity)==2) then attach(entity,'aim',old.rotate)
-        else toast('Aim the center of the camera at a character, horse or wagon','error') end
+        else toast(isGta and 'Aim the center of the camera at a character or vehicle' or 'Aim the center of the camera at a character, horse or wagon','error') end
     elseif now()-aimProbe.at>1500 then
         -- Shape tests have no documented cancellation native. Abandon a stalled
         -- handle after a bounded poll so another attachment request can proceed.
@@ -1083,7 +1138,7 @@ end
 local function tick()
     pollAim()
     if not active then return end
-    if not player or N('PLAYER_PED_ID')~=player or not N('DOES_ENTITY_EXIST',player) or N('IS_ENTITY_DEAD',player) then cleanup();return end
+    if not player or N('PLAYER_PED_ID')~=player or not N('DOES_ENTITY_EXIST',player) or entityDead(player) then cleanup();return end
     local tickTime=now();local frameTime=num(N('GET_FRAME_TIME'),0,10,0.016)
     local oldPosition,oldRotation=C.copy(camera.pos),C.copy(camera.rot)
     motionElapsed=motionElapsed+frameTime
@@ -1134,7 +1189,7 @@ local function tick()
         local displacement=F.move(flightSmoothing,desired,dt,settings.stabilization)
         if length(displacement)>0 then
             local target=add(camera.pos,displacement)
-            local origin=vec(N('GET_ENTITY_COORDS',player,true,true));local delta=sub(target,origin)
+            local origin=vec(entityCoords(player));local delta=sub(target,origin)
             local maximum=cfg.MaxDistance or 2000
             if length(delta)>maximum then target=add(origin,mul(delta,maximum/length(delta))) end
             camera.pos=target
