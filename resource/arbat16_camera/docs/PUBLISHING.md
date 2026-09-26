@@ -4,7 +4,7 @@ These instructions prepare the official GitHub release and the package you uploa
 
 ## Release identity
 
-- Repository: [AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA).
+- Repository: [AppiChudilko/ARBAT16-CINEMATIC_CAMERA](https://github.com/AppiChudilko/ARBAT16-CINEMATIC_CAMERA).
 - Platforms: one archive for FiveM and RedM, automatically detected.
 - Release version: `1.8.0`, with matching `v1.8.0` tag, manifest, README and product description.
 - Installed folder: `arbat16_camera`.

@@ -4,7 +4,7 @@ Copyright (c) 2026 ARBAT16
 Licensor: ARBAT16, GitHub account AppiChudilko
 Official website: https://arbat16.com
 Official Discord: https://dscrd.in/arbat16
-Project: https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA
+Project: https://github.com/AppiChudilko/ARBAT16-CINEMATIC_CAMERA
 
 This is a custom source-available license. It is not the MIT License and is
 not an open-source license. Its restriction on paid distribution is part

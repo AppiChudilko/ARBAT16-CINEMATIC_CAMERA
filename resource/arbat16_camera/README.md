@@ -183,6 +183,6 @@ This is source-available software under the [ARBAT16 No-Resale License](LICENSE.
 
 See [License FAQ](docs/LICENSE-FAQ.md) for examples and [Third-party notices](THIRD_PARTY_NOTICES.md) for Inter's separate SIL Open Font License. This is not an MIT or OSI open-source license.
 
-Questions and bug reports: [GitHub issues](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/issues).
+Questions and bug reports: [GitHub issues](https://github.com/AppiChudilko/ARBAT16-CINEMATIC_CAMERA/issues).
 
 Official website: [arbat16.com](https://arbat16.com) · Discord: [dscrd.in/arbat16](https://dscrd.in/arbat16).

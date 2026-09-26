@@ -46,7 +46,7 @@ No. Bundled Inter remains under SIL Open Font License 1.1. Its copyright and com
 
 ## Who is the Licensor?
 
-ARBAT16, publishing through the GitHub account [AppiChudilko](https://github.com/AppiChudilko). The project repository is [ARBAT16-REDM_CINEMATIC_CAMERA](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA). An exception to the license must be expressly given in writing by the Licensor.
+ARBAT16, publishing through the GitHub account [AppiChudilko](https://github.com/AppiChudilko). The project repository is [ARBAT16-CINEMATIC_CAMERA](https://github.com/AppiChudilko/ARBAT16-CINEMATIC_CAMERA). An exception to the license must be expressly given in writing by the Licensor.
 
 ## Official contacts
 

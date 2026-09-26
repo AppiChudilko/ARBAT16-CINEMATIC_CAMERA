@@ -6,9 +6,9 @@
 
 **Direct cinematic shots inside FiveM and RedM.**<br>Fly the camera, save your angles, lay the shot out on a timeline and play it back while your recorder runs.
 
-[![Version 1.8.0 source](https://img.shields.io/badge/source-1.8.0-111111?style=for-the-badge&labelColor=000000)](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/archive/refs/heads/main.zip) ![Games: FiveM and RedM](https://img.shields.io/badge/games-FiveM%20%2B%20RedM-111111?style=for-the-badge&labelColor=000000) ![Framework: none](https://img.shields.io/badge/framework-none-111111?style=for-the-badge&labelColor=000000) ![Price: free](https://img.shields.io/badge/price-free-111111?style=for-the-badge&labelColor=000000)
+[![Version 1.8.0 release](https://img.shields.io/badge/release-1.8.0-111111?style=for-the-badge&labelColor=000000)](https://github.com/AppiChudilko/ARBAT16-CINEMATIC_CAMERA/releases/tag/v1.8.0) ![Games: FiveM and RedM](https://img.shields.io/badge/games-FiveM%20%2B%20RedM-111111?style=for-the-badge&labelColor=000000) ![Framework: none](https://img.shields.io/badge/framework-none-111111?style=for-the-badge&labelColor=000000) ![Price: free](https://img.shields.io/badge/price-free-111111?style=for-the-badge&labelColor=000000)
 
-[**Download source ZIP**](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/archive/refs/heads/main.zip) · [Website](https://store.arbat16.com/cinematic-camera) · [User guide](resource/arbat16_camera/README.md) · [Changelog](resource/arbat16_camera/CHANGELOG.md) · [Report a problem](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/issues) · [Discord](https://dscrd.in/arbat16)
+[**Download the ZIP**](https://github.com/AppiChudilko/ARBAT16-CINEMATIC_CAMERA/releases/download/v1.8.0/arbat16_camera-v1.8.0.zip) · [Website](https://store.arbat16.com/cinematic-camera) · [User guide](resource/arbat16_camera/README.md) · [Changelog](resource/arbat16_camera/CHANGELOG.md) · [Report a problem](https://github.com/AppiChudilko/ARBAT16-CINEMATIC_CAMERA/issues) · [Discord](https://dscrd.in/arbat16)
 
 </div>
 
@@ -110,8 +110,8 @@ The sixth look, **Natural**, keeps the game picture as it is.
 
 ## Install
 
-1. Download the [main branch source ZIP](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/archive/refs/heads/main.zip) for the universal version 1.8.0. A GitHub Release for 1.8.0 has not been published yet.
-2. Open `ARBAT16-REDM_CINEMATIC_CAMERA-main/resource/` inside the archive and copy its **`arbat16_camera`** folder into your FiveM or RedM server's `resources` directory. The manifest should end up at `resources/arbat16_camera/fxmanifest.lua`; keep the folder name.
+1. Download [arbat16_camera-v1.8.0.zip](https://github.com/AppiChudilko/ARBAT16-CINEMATIC_CAMERA/releases/download/v1.8.0/arbat16_camera-v1.8.0.zip) from [release v1.8.0](https://github.com/AppiChudilko/ARBAT16-CINEMATIC_CAMERA/releases/tag/v1.8.0). Its [SHA-256 checksum](https://github.com/AppiChudilko/ARBAT16-CINEMATIC_CAMERA/releases/download/v1.8.0/arbat16_camera-v1.8.0.zip.sha256) is available alongside it.
+2. Extract the archive's **`arbat16_camera`** folder into your FiveM or RedM server's `resources` directory. The manifest should end up at `resources/arbat16_camera/fxmanifest.lua`; keep the folder name.
 3. Add these lines to `server.cfg`:
 
    ```cfg
@@ -121,7 +121,7 @@ The sixth look, **Natural**, keeps the game picture as it is.
 
 4. Restart the server, or run `refresh` and `ensure arbat16_camera` in the console, then type `/ar16_cam` in chat.
 
-The same folder runs in both games and detects the platform automatically. No framework, database, npm build or external font download is needed. The source archive also contains development files; only the nested `arbat16_camera` folder is installed on the server.
+The same folder runs in both games and detects the platform automatically. No framework, database, npm build or external font download is needed. The release ZIP contains the ready-to-install resource and its license documents.
 
 > [!TIP]
 > To give the camera to one player instead of the whole admin group, grant the ACE to their license:
@@ -195,7 +195,7 @@ Scenes and workspaces are stored in server resource KVP under each player's lice
 | `ar16_camdebug` | F8, camera open | Print camera, input and timeline state; read-only |
 | `ar16_camclose` | F8 | Emergency cleanup of the camera, focus and player freeze |
 
-If flight or playback does not move the camera, run `ar16_camdebug` while the camera is open and paste its output into an [issue](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA/issues). With `Diagnostics=true` the server also writes `camera-diagnostics.jsonl` inside the resource, capped at 256 KiB, with no license, account name or hardware identifiers.
+If flight or playback does not move the camera, run `ar16_camdebug` while the camera is open and paste its output into an [issue](https://github.com/AppiChudilko/ARBAT16-CINEMATIC_CAMERA/issues). With `Diagnostics=true` the server also writes `camera-diagnostics.jsonl` inside the resource, capped at 256 KiB, with no license, account name or hardware identifiers.
 
 Use one camera editor at a time. RedM retains `simple_weather` integration. FiveM uses local weather and clock overrides; a continuously syncing weather controller may overwrite them and needs to be coordinated for filming.
 

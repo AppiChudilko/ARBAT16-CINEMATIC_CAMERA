@@ -41,7 +41,7 @@ Filter and focus appearance depend on game settings and other camera, timecycle 
 
 ## Included and licensed
 
-The package includes the Lua resource, local NUI assets, configuration, documentation and license notices. The archive contains editable source. The project originated with [ARBAT16 RedM Camera](https://github.com/AppiChudilko/ARBAT16-REDM_CINEMATIC_CAMERA).
+The package includes the Lua resource, local NUI assets, configuration, documentation and license notices. The archive contains editable source. The project originated with [ARBAT16 RedM Camera](https://github.com/AppiChudilko/ARBAT16-CINEMATIC_CAMERA).
 
 Use and modification, including commercial-server use and monetized videos, are permitted under the included ARBAT16 source-available license. Free redistribution must retain the license and notices. Selling, reselling, renting or charging for copies of the script or derivatives, including paid bundles, requires separate written permission from ARBAT16. Bundled Inter uses SIL OFL 1.1.
 
