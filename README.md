@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/banner.jpg" alt="ARBAT16 Cinematic Camera for RedM" width="100%">
+<img src="docs/images/banner.jpg" alt="ARBAT16 Cinematic Camera for FiveM and RedM" width="100%">
 
 # ARBAT16 Cinematic Camera
 
@@ -26,45 +26,56 @@ A standalone Lua director for FiveM and RedM: free flight, saved camera angles, 
 
 <a href="https://store.arbat16.com/cinematic-camera#reel"><img src="docs/images/shot-wagon.jpg" alt="A horse cart crossing a sunlit Saint Denis street, framed at 2.39:1" width="100%"></a>
 
-<sub>RedM footage: a Saint Denis street flown and framed at 2.39:1 with the camera. Watch the clip on the <a href="https://store.arbat16.com/cinematic-camera#reel">website</a>.</sub>
+<sub><b>RedM</b>: a Saint Denis street flown and framed at 2.39:1 with the camera. Watch the clip on the <a href="https://store.arbat16.com/cinematic-camera#reel">website</a>.</sub>
 
-All screenshots and the banner on this page show **RedM**. FiveM shares the editor layout and uses its own game effects and environments.
+<img src="docs/images/shot-vinewood.jpg" alt="The Vinewood sign behind palm trees in FiveM, framed at 2.39:1" width="100%">
+
+<sub><b>FiveM</b>: the Vinewood Hills in Los Santos, framed at 2.39:1 with the interface hidden.</sub>
+
+<table>
+  <tr>
+    <td width="50%" valign="top"><img src="docs/images/shot-downtown.jpg" alt="Downtown Los Santos skyline through palm trees in FiveM" width="100%"><br><sub><b>FiveM</b>, downtown Los Santos</sub></td>
+    <td width="50%" valign="top"><img src="docs/images/shot-penthouse.jpg" alt="Penthouse kitchen and terrace over the Los Santos skyline in FiveM" width="100%"><br><sub><b>FiveM</b>, a penthouse over the city</sub></td>
+  </tr>
+</table>
+
+Every screenshot on this page is labeled with its game. Both games share the editor layout; each uses its own game effects and environments.
 
 ## Features
 
 <table>
   <tr>
     <td width="50%" valign="top">
-      <img src="docs/images/flight.jpg" alt="Flight mode with the on-screen shortcut guide" width="100%">
+      <img src="docs/images/flight-fivem.jpg" alt="Flight mode with the on-screen shortcut guide over downtown Los Santos in FiveM" width="100%"><br><sub><b>FiveM</b></sub>
       <h3>Fly it like a camera operator</h3>
       <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to move, <kbd>Q</kbd> <kbd>E</kbd> for height, the mouse to look. Hold <kbd>Shift</kbd> to cover ground, <kbd>Alt</kbd> or <kbd>Ctrl</kbd> to creep into position, and pick Off, Light, Medium or Strong stabilization for a steady move.
     </td>
     <td width="50%" valign="top">
-      <img src="docs/images/director.jpg" alt="Director panel and timeline in edit mode" width="100%">
+      <img src="docs/images/director.jpg" alt="Director panel and timeline in edit mode" width="100%"><br><sub><b>RedM</b></sub>
       <h3>Build the shot on a timeline</h3>
       Drop points with <kbd>F</kbd>, set how long each move takes and how it eases. Linear, Catmull-Rom and Bezier paths, six easing modes, cuts, holds, multi-select and 50 steps of undo.
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <img src="docs/images/recording.jpg" alt="Clean 2.39:1 frame of a Saint Denis street with the interface hidden" width="100%">
+      <img src="docs/images/recording.jpg" alt="Clean 2.39:1 frame of a Saint Denis street with the interface hidden" width="100%"><br><sub><b>RedM</b></sub>
       <h3>Record a move and play it back</h3>
       Press <kbd>R</kbd>, fly the shot by hand and press <kbd>R</kbd> again. Up to 30 samples a second with real timing, so a pause in your hand stays a pause on screen. Takes run up to five minutes.
     </td>
     <td width="50%" valign="top">
-      <img src="docs/images/look-western-scope.jpg" alt="Western Scope look with a 2.39:1 CinemaScope frame" width="100%">
+      <img src="docs/images/look-western-scope.jpg" alt="Western Scope look with a 2.39:1 CinemaScope frame" width="100%"><br><sub><b>RedM</b></sub>
       <h3>Six looks, seven frames</h3>
       Six ready-made presets, game-specific native filters including Black &amp; White, and frames from native to 2.39:1 CinemaScope. Tune the filter strength and save up to 40 presets of your own.
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <img src="docs/images/guides.jpg" alt="Fine 4 by 4 composition grid over a street with a horse carriage" width="100%">
+      <img src="docs/images/guides-fivem.jpg" alt="Rule of thirds guide over a Los Santos rooftop pool at sunset in FiveM" width="100%"><br><sub><b>FiveM</b></sub>
       <h3>Frame it like a cinematographer</h3>
       Press <kbd>G</kbd> for rule of thirds, golden ratio, diagonals, a fine grid, a centre cross or safe areas. Guides follow the chosen frame and hide together with the interface.
     </td>
     <td width="50%" valign="top">
-      <img src="docs/images/library.jpg" alt="Cathedral view from a saved camera with the director panel open" width="100%">
+      <img src="docs/images/library.jpg" alt="Cathedral view from a saved camera with the director panel open" width="100%"><br><sub><b>RedM</b></sub>
       <h3>Keep every angle you liked</h3>
       Save up to 100 named cameras with markers in the world, drag them onto the timeline as holds and keep whole scenes in a library tied to your license. The workspace autosaves.
     </td>
@@ -231,7 +242,7 @@ The build produces one installable resource folder with its license documents an
 
 Native checks use four reference fixtures fetched by `tools/fetch_native_references.py` at pinned commits and verified by hash. The first run needs network access; subsequent runs can use the cached fixtures offline.
 
-Tests cover the logic and interface for both games. Version 1.8.0 still needs an in-game smoke test in **FiveM and RedM**: native effects and compatibility with other camera or weather resources depend on that environment. The RedM screenshots above do not verify the universal build in either game.
+Tests cover the logic and interface for both games. Version 1.8.0 still needs an in-game smoke test in **FiveM and RedM**: native effects and compatibility with other camera or weather resources depend on that environment. The screenshots above do not replace that test.
 
 [Changes](resource/arbat16_camera/CHANGELOG.md) · [Tebex product text](resource/arbat16_camera/docs/TEBEX-DESCRIPTION.md) · [Publishing notes](resource/arbat16_camera/docs/PUBLISHING.md)
 
